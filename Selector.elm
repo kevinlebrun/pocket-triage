@@ -8,10 +8,6 @@ import Html.Attributes exposing (..)
 import String
 
 
--- TODO review Reset
--- TODO implements previous / undo
-
-
 type alias Model =
   { links : List ( Id, Link )
   , selected : Maybe Id

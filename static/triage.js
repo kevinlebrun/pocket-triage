@@ -11327,7 +11327,7 @@ Elm.Styles.make = function (_elm) {
    $Signal = Elm.Signal.make(_elm);
    var _op = {};
    var styles = function () {
-      var css = "\n.container {\n  margin: auto;\n  width: 70%;\n}\n\n.stats__summary {\n  float: left;\n  padding-left: 5px;\n}\n\n.stats__progress {\n  float: right;\n  padding-right: 5px;\n}\n\n.links {\n  clear: both;\n}\n\n.link {\n  padding: 5px;\n}\n\na, a:link, a:hover, a:visited {\n  color: black;\n  text-decoration: none;\n}\n\n.link--selected, .link--selected a {\n  background-color: #0F5CBF;\n  color: white;\n}\n\n.link--keep, .link--keep a {\n  background-color: #F25C05;\n  color: white;\n}\n\n.link--favorite, .link--favorite a {\n  background-color: #F2CD13;\n  color: white;\n}\n\n.link__excerpt {\n  font-style: italic;\n  font-size: 0.8em;\n}\n";
+      var css = "\n.container {\n  margin: auto;\n  width: 70%;\n}\n\n.stats__summary {\n  float: left;\n  padding-left: 5px;\n}\n\n.stats__progress {\n  float: right;\n  padding-right: 5px;\n}\n\n.links {\n  clear: both;\n}\n\n.link {\n  padding: 5px;\n  border-left: 5px solid transparent;\n}\n\na, a:link, a:hover, a:visited {\n  color: black;\n  text-decoration: none;\n}\n\n.link--selected, .link--selected a {\n  background-color: #0F5CBF;\n  color: white;\n}\n\n.link--keep {\n  border-left: 5px solid #F25C05;\n}\n\n.link--favorite {\n  border-left: 5px solid #F2CD13;\n}\n\n.link__excerpt {\n  font-style: italic;\n  font-size: 0.8em;\n}\n";
       return A3($Html.node,"style",_U.list([]),_U.list([$Html.text(css)]));
    }();
    return _elm.Styles.values = {_op: _op,styles: styles};
@@ -11379,19 +11379,15 @@ Elm.Triage.make = function (_elm) {
       return A2($Task.onError,
       A4(authed,"DELETE",token,"http://localhost:8080/links",$Http.string(A2($Json$Encode.encode,0,linksValue(links)))),
       function (err) {
-         return _U.crash("Triage",{start: {line: 235,column: 24},end: {line: 235,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+         return _U.crash("Triage",{start: {line: 221,column: 24},end: {line: 221,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
       });
    });
    var takeSnapshot = F3(function (page,n,links) {    return A2($List.take,10,A2($List.drop,(page - 1) * 10,links));});
    var OnReceiveLinks = function (a) {    return {ctor: "OnReceiveLinks",_0: a};};
    var Link = function (a) {    return {ctor: "Link",_0: a};};
-   var Reset = {ctor: "Reset"};
    var Next = {ctor: "Next"};
    var keyboard = function () {
-      var keyToAction = function (key) {
-         var $char = $Char.fromCode(key);
-         return _U.eq($char,_U.chr(" ")) ? Next : _U.eq($char,_U.chr("C")) ? Reset : Link($Selector.keyToAction(key));
-      };
+      var keyToAction = function (key) {    var $char = $Char.fromCode(key);return _U.eq($char,_U.chr(" ")) ? Next : Link($Selector.keyToAction(key));};
       return A2($Signal.map,keyToAction,$Keyboard.presses);
    }();
    var NoOp = {ctor: "NoOp"};
@@ -11423,10 +11419,6 @@ Elm.Triage.make = function (_elm) {
          case "OnReceiveLinks": var _p5 = _p0._0;
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,{links: _p5,snapshot: $Selector.initialModel(A3(takeSnapshot,model.page,model.perPage,_p5)),done: $List.isEmpty(_p5)})
-                  ,_1: $Effects.none};
-         case "Reset": var page = 1;
-           return {ctor: "_Tuple2"
-                  ,_0: _U.update(model,{snapshot: $Selector.initialModel(A3(takeSnapshot,page,model.perPage,model.links)),page: 1,deleted: _U.list([])})
                   ,_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
    });
@@ -11491,7 +11483,7 @@ Elm.Triage.make = function (_elm) {
          return A2($Signal.send,actions.address,OnReceiveLinks(_p6));
       }),
       function (err) {
-         return _U.crash("Triage",{start: {line: 214,column: 24},end: {line: 214,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+         return _U.crash("Triage",{start: {line: 200,column: 24},end: {line: 200,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
       });
    };
    var runner = Elm.Native.Task.make(_elm).performSignal("runner",
@@ -11518,7 +11510,6 @@ Elm.Triage.make = function (_elm) {
                                ,stats: stats
                                ,NoOp: NoOp
                                ,Next: Next
-                               ,Reset: Reset
                                ,Link: Link
                                ,OnReceiveLinks: OnReceiveLinks
                                ,takeSnapshot: takeSnapshot

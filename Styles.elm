@@ -28,6 +28,7 @@ styles =
 
 .link {
   padding: 5px;
+  border-left: 5px solid transparent;
 }
 
 a, a:link, a:hover, a:visited {
@@ -40,14 +41,12 @@ a, a:link, a:hover, a:visited {
   color: white;
 }
 
-.link--keep, .link--keep a {
-  background-color: #F25C05;
-  color: white;
+.link--keep {
+  border-left: 5px solid #F25C05;
 }
 
-.link--favorite, .link--favorite a {
-  background-color: #F2CD13;
-  color: white;
+.link--favorite {
+  border-left: 5px solid #F2CD13;
 }
 
 .link__excerpt {

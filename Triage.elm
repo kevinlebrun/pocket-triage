@@ -65,7 +65,7 @@ emptyModel =
 view : Signal.Address Action -> Model -> Html
 view address model =
   if model.token == Nothing then
-    -- TODO refactor proper Anonymous tag
+    -- TODO refactor with proper Anonymous tag
     div
       [ class "container" ]
       [ styles
@@ -117,7 +117,6 @@ stats model =
 type Action
   = NoOp
   | Next
-  | Reset
   | Link Selector.Action
   | OnReceiveLinks (List Link)
 
@@ -176,19 +175,6 @@ update action model =
         }
       , Effects.none
       )
-
-    Reset ->
-      let
-        page =
-          1
-      in
-        ( { model
-            | snapshot = Selector.initialModel <| takeSnapshot page model.perPage model.links
-            , page = 1
-            , deleted = []
-          }
-        , Effects.none
-        )
 
     NoOp ->
       ( model, Effects.none )
@@ -256,8 +242,6 @@ keyboard =
       in
         if char == ' ' then
           Next
-        else if char == 'C' then
-          Reset
         else
           Link (Selector.keyToAction key)
   in
