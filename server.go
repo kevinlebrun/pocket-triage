@@ -10,9 +10,12 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"strings"
 
 	"github.com/gorilla/mux"
 )
+
+const consumer_key = "51813-9210c4b043da8404cede46e2"
 
 type AuthRequest struct {
 	ConsumerKey string `json:"consumer_key"`
@@ -27,38 +30,55 @@ type GetRequest struct {
 	Offset     int    `json:"offset"`
 }
 
+type Action struct {
+	ItemID string `json:"item_id"`
+	Action string `json:"action"`
+}
+
+type DeleteRequest struct {
+	AuthRequest
+	Actions []Action `json:"actions"`
+}
+
+type Item struct {
+	Id    string `json:"id"`
+	Title string `json:"title"`
+	URL   string `json:"url"`
+}
+
 func main() {
 	router := mux.NewRouter().StrictSlash(true)
-
-	router.HandleFunc("/", HandleIndex)
-	fs := http.FileServer(http.Dir("static"))
-	router.PathPrefix("/static/").Handler(http.StripPrefix("/static/", fs))
-	router.HandleFunc("/login", HandleLogin)
 
 	router.HandleFunc("/oauth/request", AuthInit).Methods("GET")
 	router.HandleFunc("/oauth/access_token", AuthFetchAccessToken).Methods("GET")
 
-	router.HandleFunc("/sessions", SessionsShow).Methods("GET")
-	router.HandleFunc("/sessions", SessionsCreate).Methods("POST")
-	router.HandleFunc("/sessions/{id}", SessionShow).Methods("GET")
-	router.HandleFunc("/sessions/{id}/links", SessionLinksShow).Methods("GET")
-	router.HandleFunc("/sessions/{id}/link", SessionLinkDelete).Methods("DELETE")
-	router.HandleFunc("/sessions/{id}/link", SessionLinkUpdate).Methods("PATCH")
+	router.HandleFunc("/links", BatchDeleteLinks).Methods("DELETE")
+	router.HandleFunc("/links", FetchAllLinks).Methods("GET")
+
+	router.PathPrefix("/").HandlerFunc(HandleStatic)
 
 	log.Fatal(http.ListenAndServe(":8080", router))
 }
 
-func HandleIndex(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "index.html")
-}
+func HandleStatic(w http.ResponseWriter, r *http.Request) {
+	path := strings.TrimPrefix(r.URL.Path, "/")
 
-func HandleLogin(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "login.html")
+	if path == "" {
+		path = "index.html"
+	}
+
+	data, err := Asset(path)
+	if err != nil {
+		w.WriteHeader(404)
+		return
+	}
+
+	io.Copy(w, bytes.NewReader(data))
 }
 
 func AuthInit(w http.ResponseWriter, r *http.Request) {
 	values := url.Values{
-		"consumer_key": {"51813-9210c4b043da8404cede46e2"},
+		"consumer_key": {consumer_key},
 		"redirect_uri": {"Triage:authorizationFinished"},
 	}
 	resp, _ := http.PostForm("https://getpocket.com/v3/oauth/request.php", values)
@@ -73,11 +93,12 @@ func AuthInit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// TODO handle 403
 func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 	request_token := r.URL.Query().Get("request_token")
 
 	values := url.Values{
-		"consumer_key": {"51813-9210c4b043da8404cede46e2"},
+		"consumer_key": {consumer_key},
 		"code":         {request_token},
 	}
 
@@ -86,16 +107,18 @@ func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 	defer resp.Body.Close()
 	body, _ := ioutil.ReadAll(resp.Body)
 
-	// TODO handle 403 Forbidden here
-
 	result, _ := url.ParseQuery(string(body))
 	fmt.Printf("%+v\n", result)
 
+	http.Redirect(w, r, "http://localhost:8080?access_token="+result.Get("access_token"), 302)
+}
+
+func FetchAllLinks(w http.ResponseWriter, r *http.Request) {
 	request := GetRequest{
-		AuthRequest{"51813-9210c4b043da8404cede46e2", result.Get("access_token")},
+		AuthRequest{consumer_key, r.Header.Get("token")},
 		"unread",
 		"complete",
-		100,
+		5000,
 		0,
 	}
 
@@ -113,22 +136,34 @@ func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, res.Body)
 }
 
-func SessionsShow(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Sessions...")
-}
+func BatchDeleteLinks(w http.ResponseWriter, r *http.Request) {
+	defer r.Body.Close()
+	body, _ := ioutil.ReadAll(r.Body)
 
-func SessionsCreate(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Creating a new session...")
-}
+	var items []Item
+	var actions []Action
 
-func SessionShow(w http.ResponseWriter, r *http.Request) {
-}
+	json.Unmarshal(body, &items)
 
-func SessionLinksShow(w http.ResponseWriter, r *http.Request) {
-}
+	for _, item := range items {
+		actions = append(actions, Action{item.Id, "delete"})
+	}
 
-func SessionLinkDelete(w http.ResponseWriter, r *http.Request) {
-}
+	request := DeleteRequest{
+		AuthRequest{consumer_key, r.Header.Get("token")},
+		actions,
+	}
 
-func SessionLinkUpdate(w http.ResponseWriter, r *http.Request) {
+	requestJson, _ := json.Marshal(request)
+	url := "https://getpocket.com/v3/send"
+	req, _ := http.NewRequest("POST", url, bytes.NewReader(requestJson))
+
+	req.Header.Add("content-type", "application/json")
+
+	res, _ := http.DefaultClient.Do(req)
+
+	w.Header().Add("content-type", "application/json")
+
+	defer res.Body.Close()
+	io.Copy(w, res.Body)
 }

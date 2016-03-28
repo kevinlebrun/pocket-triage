@@ -8285,6 +8285,363 @@ Elm.Json.Decode.make = function (_elm) {
                                     ,value: value
                                     ,customDecoder: customDecoder};
 };
+Elm.Set = Elm.Set || {};
+Elm.Set.make = function (_elm) {
+   "use strict";
+   _elm.Set = _elm.Set || {};
+   if (_elm.Set.values) return _elm.Set.values;
+   var _U = Elm.Native.Utils.make(_elm),$Basics = Elm.Basics.make(_elm),$Dict = Elm.Dict.make(_elm),$List = Elm.List.make(_elm);
+   var _op = {};
+   var foldr = F3(function (f,b,_p0) {    var _p1 = _p0;return A3($Dict.foldr,F3(function (k,_p2,b) {    return A2(f,k,b);}),b,_p1._0);});
+   var foldl = F3(function (f,b,_p3) {    var _p4 = _p3;return A3($Dict.foldl,F3(function (k,_p5,b) {    return A2(f,k,b);}),b,_p4._0);});
+   var toList = function (_p6) {    var _p7 = _p6;return $Dict.keys(_p7._0);};
+   var size = function (_p8) {    var _p9 = _p8;return $Dict.size(_p9._0);};
+   var member = F2(function (k,_p10) {    var _p11 = _p10;return A2($Dict.member,k,_p11._0);});
+   var isEmpty = function (_p12) {    var _p13 = _p12;return $Dict.isEmpty(_p13._0);};
+   var Set_elm_builtin = function (a) {    return {ctor: "Set_elm_builtin",_0: a};};
+   var empty = Set_elm_builtin($Dict.empty);
+   var singleton = function (k) {    return Set_elm_builtin(A2($Dict.singleton,k,{ctor: "_Tuple0"}));};
+   var insert = F2(function (k,_p14) {    var _p15 = _p14;return Set_elm_builtin(A3($Dict.insert,k,{ctor: "_Tuple0"},_p15._0));});
+   var fromList = function (xs) {    return A3($List.foldl,insert,empty,xs);};
+   var map = F2(function (f,s) {    return fromList(A2($List.map,f,toList(s)));});
+   var remove = F2(function (k,_p16) {    var _p17 = _p16;return Set_elm_builtin(A2($Dict.remove,k,_p17._0));});
+   var union = F2(function (_p19,_p18) {    var _p20 = _p19;var _p21 = _p18;return Set_elm_builtin(A2($Dict.union,_p20._0,_p21._0));});
+   var intersect = F2(function (_p23,_p22) {    var _p24 = _p23;var _p25 = _p22;return Set_elm_builtin(A2($Dict.intersect,_p24._0,_p25._0));});
+   var diff = F2(function (_p27,_p26) {    var _p28 = _p27;var _p29 = _p26;return Set_elm_builtin(A2($Dict.diff,_p28._0,_p29._0));});
+   var filter = F2(function (p,_p30) {    var _p31 = _p30;return Set_elm_builtin(A2($Dict.filter,F2(function (k,_p32) {    return p(k);}),_p31._0));});
+   var partition = F2(function (p,_p33) {
+      var _p34 = _p33;
+      var _p35 = A2($Dict.partition,F2(function (k,_p36) {    return p(k);}),_p34._0);
+      var p1 = _p35._0;
+      var p2 = _p35._1;
+      return {ctor: "_Tuple2",_0: Set_elm_builtin(p1),_1: Set_elm_builtin(p2)};
+   });
+   return _elm.Set.values = {_op: _op
+                            ,empty: empty
+                            ,singleton: singleton
+                            ,insert: insert
+                            ,remove: remove
+                            ,isEmpty: isEmpty
+                            ,member: member
+                            ,size: size
+                            ,foldl: foldl
+                            ,foldr: foldr
+                            ,map: map
+                            ,filter: filter
+                            ,partition: partition
+                            ,union: union
+                            ,intersect: intersect
+                            ,diff: diff
+                            ,toList: toList
+                            ,fromList: fromList};
+};
+Elm.Native.Keyboard = {};
+
+Elm.Native.Keyboard.make = function(localRuntime) {
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Keyboard = localRuntime.Native.Keyboard || {};
+	if (localRuntime.Native.Keyboard.values)
+	{
+		return localRuntime.Native.Keyboard.values;
+	}
+
+	var NS = Elm.Native.Signal.make(localRuntime);
+
+
+	function keyEvent(event)
+	{
+		return {
+			alt: event.altKey,
+			meta: event.metaKey,
+			keyCode: event.keyCode
+		};
+	}
+
+
+	function keyStream(node, eventName, handler)
+	{
+		var stream = NS.input(eventName, { alt: false, meta: false, keyCode: 0 });
+
+		localRuntime.addListener([stream.id], node, eventName, function(e) {
+			localRuntime.notify(stream.id, handler(e));
+		});
+
+		return stream;
+	}
+
+	var downs = keyStream(document, 'keydown', keyEvent);
+	var ups = keyStream(document, 'keyup', keyEvent);
+	var presses = keyStream(document, 'keypress', keyEvent);
+	var blurs = keyStream(window, 'blur', function() { return null; });
+
+
+	return localRuntime.Native.Keyboard.values = {
+		downs: downs,
+		ups: ups,
+		blurs: blurs,
+		presses: presses
+	};
+};
+
+Elm.Keyboard = Elm.Keyboard || {};
+Elm.Keyboard.make = function (_elm) {
+   "use strict";
+   _elm.Keyboard = _elm.Keyboard || {};
+   if (_elm.Keyboard.values) return _elm.Keyboard.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Char = Elm.Char.make(_elm),
+   $Native$Keyboard = Elm.Native.Keyboard.make(_elm),
+   $Set = Elm.Set.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var presses = A2($Signal.map,function (_) {    return _.keyCode;},$Native$Keyboard.presses);
+   var toXY = F2(function (_p0,keyCodes) {
+      var _p1 = _p0;
+      var is = function (keyCode) {    return A2($Set.member,keyCode,keyCodes) ? 1 : 0;};
+      return {x: is(_p1.right) - is(_p1.left),y: is(_p1.up) - is(_p1.down)};
+   });
+   var Directions = F4(function (a,b,c,d) {    return {up: a,down: b,left: c,right: d};});
+   var dropMap = F2(function (f,signal) {    return $Signal.dropRepeats(A2($Signal.map,f,signal));});
+   var EventInfo = F3(function (a,b,c) {    return {alt: a,meta: b,keyCode: c};});
+   var Blur = {ctor: "Blur"};
+   var Down = function (a) {    return {ctor: "Down",_0: a};};
+   var Up = function (a) {    return {ctor: "Up",_0: a};};
+   var rawEvents = $Signal.mergeMany(_U.list([A2($Signal.map,Up,$Native$Keyboard.ups)
+                                             ,A2($Signal.map,Down,$Native$Keyboard.downs)
+                                             ,A2($Signal.map,$Basics.always(Blur),$Native$Keyboard.blurs)]));
+   var empty = {alt: false,meta: false,keyCodes: $Set.empty};
+   var update = F2(function (event,model) {
+      var _p2 = event;
+      switch (_p2.ctor)
+      {case "Down": var _p3 = _p2._0;
+           return {alt: _p3.alt,meta: _p3.meta,keyCodes: A2($Set.insert,_p3.keyCode,model.keyCodes)};
+         case "Up": var _p4 = _p2._0;
+           return {alt: _p4.alt,meta: _p4.meta,keyCodes: A2($Set.remove,_p4.keyCode,model.keyCodes)};
+         default: return empty;}
+   });
+   var model = A3($Signal.foldp,update,empty,rawEvents);
+   var alt = A2(dropMap,function (_) {    return _.alt;},model);
+   var meta = A2(dropMap,function (_) {    return _.meta;},model);
+   var keysDown = A2(dropMap,function (_) {    return _.keyCodes;},model);
+   var arrows = A2(dropMap,toXY({up: 38,down: 40,left: 37,right: 39}),keysDown);
+   var wasd = A2(dropMap,toXY({up: 87,down: 83,left: 65,right: 68}),keysDown);
+   var isDown = function (keyCode) {    return A2(dropMap,$Set.member(keyCode),keysDown);};
+   var ctrl = isDown(17);
+   var shift = isDown(16);
+   var space = isDown(32);
+   var enter = isDown(13);
+   var Model = F3(function (a,b,c) {    return {alt: a,meta: b,keyCodes: c};});
+   return _elm.Keyboard.values = {_op: _op
+                                 ,arrows: arrows
+                                 ,wasd: wasd
+                                 ,enter: enter
+                                 ,space: space
+                                 ,ctrl: ctrl
+                                 ,shift: shift
+                                 ,alt: alt
+                                 ,meta: meta
+                                 ,isDown: isDown
+                                 ,keysDown: keysDown
+                                 ,presses: presses};
+};
+Elm.Native.Effects = {};
+Elm.Native.Effects.make = function(localRuntime) {
+
+	localRuntime.Native = localRuntime.Native || {};
+	localRuntime.Native.Effects = localRuntime.Native.Effects || {};
+	if (localRuntime.Native.Effects.values)
+	{
+		return localRuntime.Native.Effects.values;
+	}
+
+	var Task = Elm.Native.Task.make(localRuntime);
+	var Utils = Elm.Native.Utils.make(localRuntime);
+	var Signal = Elm.Signal.make(localRuntime);
+	var List = Elm.Native.List.make(localRuntime);
+
+
+	// polyfill so things will work even if rAF is not available for some reason
+	var _requestAnimationFrame =
+		typeof requestAnimationFrame !== 'undefined'
+			? requestAnimationFrame
+			: function(cb) { setTimeout(cb, 1000 / 60); }
+			;
+
+
+	// batchedSending and sendCallback implement a small state machine in order
+	// to schedule only one send(time) call per animation frame.
+	//
+	// Invariants:
+	// 1. In the NO_REQUEST state, there is never a scheduled sendCallback.
+	// 2. In the PENDING_REQUEST and EXTRA_REQUEST states, there is always exactly
+	//    one scheduled sendCallback.
+	var NO_REQUEST = 0;
+	var PENDING_REQUEST = 1;
+	var EXTRA_REQUEST = 2;
+	var state = NO_REQUEST;
+	var messageArray = [];
+
+
+	function batchedSending(address, tickMessages)
+	{
+		// insert ticks into the messageArray
+		var foundAddress = false;
+
+		for (var i = messageArray.length; i--; )
+		{
+			if (messageArray[i].address === address)
+			{
+				foundAddress = true;
+				messageArray[i].tickMessages = A3(List.foldl, List.cons, messageArray[i].tickMessages, tickMessages);
+				break;
+			}
+		}
+
+		if (!foundAddress)
+		{
+			messageArray.push({ address: address, tickMessages: tickMessages });
+		}
+
+		// do the appropriate state transition
+		switch (state)
+		{
+			case NO_REQUEST:
+				_requestAnimationFrame(sendCallback);
+				state = PENDING_REQUEST;
+				break;
+			case PENDING_REQUEST:
+				state = PENDING_REQUEST;
+				break;
+			case EXTRA_REQUEST:
+				state = PENDING_REQUEST;
+				break;
+		}
+	}
+
+
+	function sendCallback(time)
+	{
+		switch (state)
+		{
+			case NO_REQUEST:
+				// This state should not be possible. How can there be no
+				// request, yet somehow we are actively fulfilling a
+				// request?
+				throw new Error(
+					'Unexpected send callback.\n' +
+					'Please report this to <https://github.com/evancz/elm-effects/issues>.'
+				);
+
+			case PENDING_REQUEST:
+				// At this point, we do not *know* that another frame is
+				// needed, but we make an extra request to rAF just in
+				// case. It's possible to drop a frame if rAF is called
+				// too late, so we just do it preemptively.
+				_requestAnimationFrame(sendCallback);
+				state = EXTRA_REQUEST;
+
+				// There's also stuff we definitely need to send.
+				send(time);
+				return;
+
+			case EXTRA_REQUEST:
+				// Turns out the extra request was not needed, so we will
+				// stop calling rAF. No reason to call it all the time if
+				// no one needs it.
+				state = NO_REQUEST;
+				return;
+		}
+	}
+
+
+	function send(time)
+	{
+		for (var i = messageArray.length; i--; )
+		{
+			var messages = A3(
+				List.foldl,
+				F2( function(toAction, list) { return List.Cons(toAction(time), list); } ),
+				List.Nil,
+				messageArray[i].tickMessages
+			);
+			Task.perform( A2(Signal.send, messageArray[i].address, messages) );
+		}
+		messageArray = [];
+	}
+
+
+	function requestTickSending(address, tickMessages)
+	{
+		return Task.asyncFunction(function(callback) {
+			batchedSending(address, tickMessages);
+			callback(Task.succeed(Utils.Tuple0));
+		});
+	}
+
+
+	return localRuntime.Native.Effects.values = {
+		requestTickSending: F2(requestTickSending)
+	};
+
+};
+
+Elm.Effects = Elm.Effects || {};
+Elm.Effects.make = function (_elm) {
+   "use strict";
+   _elm.Effects = _elm.Effects || {};
+   if (_elm.Effects.values) return _elm.Effects.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Native$Effects = Elm.Native.Effects.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Task = Elm.Task.make(_elm),
+   $Time = Elm.Time.make(_elm);
+   var _op = {};
+   var ignore = function (task) {    return A2($Task.map,$Basics.always({ctor: "_Tuple0"}),task);};
+   var requestTickSending = $Native$Effects.requestTickSending;
+   var toTaskHelp = F3(function (address,effect,_p0) {
+      var _p1 = _p0;
+      var _p5 = _p1._1;
+      var _p4 = _p1;
+      var _p3 = _p1._0;
+      var _p2 = effect;
+      switch (_p2.ctor)
+      {case "Task": var reporter = A2($Task.andThen,_p2._0,function (answer) {    return A2($Signal.send,address,_U.list([answer]));});
+           return {ctor: "_Tuple2",_0: A2($Task.andThen,_p3,$Basics.always(ignore($Task.spawn(reporter)))),_1: _p5};
+         case "Tick": return {ctor: "_Tuple2",_0: _p3,_1: A2($List._op["::"],_p2._0,_p5)};
+         case "None": return _p4;
+         default: return A3($List.foldl,toTaskHelp(address),_p4,_p2._0);}
+   });
+   var toTask = F2(function (address,effect) {
+      var _p6 = A3(toTaskHelp,address,effect,{ctor: "_Tuple2",_0: $Task.succeed({ctor: "_Tuple0"}),_1: _U.list([])});
+      var combinedTask = _p6._0;
+      var tickMessages = _p6._1;
+      return $List.isEmpty(tickMessages) ? combinedTask : A2($Task.andThen,combinedTask,$Basics.always(A2(requestTickSending,address,tickMessages)));
+   });
+   var Never = function (a) {    return {ctor: "Never",_0: a};};
+   var Batch = function (a) {    return {ctor: "Batch",_0: a};};
+   var batch = Batch;
+   var None = {ctor: "None"};
+   var none = None;
+   var Tick = function (a) {    return {ctor: "Tick",_0: a};};
+   var tick = Tick;
+   var Task = function (a) {    return {ctor: "Task",_0: a};};
+   var task = Task;
+   var map = F2(function (func,effect) {
+      var _p7 = effect;
+      switch (_p7.ctor)
+      {case "Task": return Task(A2($Task.map,func,_p7._0));
+         case "Tick": return Tick(function (_p8) {    return func(_p7._0(_p8));});
+         case "None": return None;
+         default: return Batch(A2($List.map,map(func),_p7._0));}
+   });
+   return _elm.Effects.values = {_op: _op,none: none,task: task,tick: tick,map: map,batch: batch,toTask: toTask};
+};
 (function e(t,n,r){function s(o,u){if(!n[o]){if(!t[o]){var a=typeof require=="function"&&require;if(!u&&a)return a(o,!0);if(i)return i(o,!0);var f=new Error("Cannot find module '"+o+"'");throw f.code="MODULE_NOT_FOUND",f}var l=n[o]={exports:{}};t[o][0].call(l.exports,function(e){var n=t[o][1][e];return s(n?n:e)},l,l.exports,e,t,n,r)}return n[o].exports}var i=typeof require=="function"&&require;for(var o=0;o<r.length;o++)s(r[o]);return s})({1:[function(require,module,exports){
 
 },{}],2:[function(require,module,exports){
@@ -10746,6 +11103,235 @@ Elm.Http.make = function (_elm) {
                              ,RawTimeout: RawTimeout
                              ,RawNetworkError: RawNetworkError};
 };
+Elm.StartApp = Elm.StartApp || {};
+Elm.StartApp.make = function (_elm) {
+   "use strict";
+   _elm.StartApp = _elm.StartApp || {};
+   if (_elm.StartApp.values) return _elm.StartApp.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $Task = Elm.Task.make(_elm);
+   var _op = {};
+   var start = function (config) {
+      var updateStep = F2(function (action,_p0) {
+         var _p1 = _p0;
+         var _p2 = A2(config.update,action,_p1._0);
+         var newModel = _p2._0;
+         var additionalEffects = _p2._1;
+         return {ctor: "_Tuple2",_0: newModel,_1: $Effects.batch(_U.list([_p1._1,additionalEffects]))};
+      });
+      var update = F2(function (actions,_p3) {    var _p4 = _p3;return A3($List.foldl,updateStep,{ctor: "_Tuple2",_0: _p4._0,_1: $Effects.none},actions);});
+      var messages = $Signal.mailbox(_U.list([]));
+      var singleton = function (action) {    return _U.list([action]);};
+      var address = A2($Signal.forwardTo,messages.address,singleton);
+      var inputs = $Signal.mergeMany(A2($List._op["::"],messages.signal,A2($List.map,$Signal.map(singleton),config.inputs)));
+      var effectsAndModel = A3($Signal.foldp,update,config.init,inputs);
+      var model = A2($Signal.map,$Basics.fst,effectsAndModel);
+      return {html: A2($Signal.map,config.view(address),model)
+             ,model: model
+             ,tasks: A2($Signal.map,function (_p5) {    return A2($Effects.toTask,messages.address,$Basics.snd(_p5));},effectsAndModel)};
+   };
+   var App = F3(function (a,b,c) {    return {html: a,model: b,tasks: c};});
+   var Config = F4(function (a,b,c,d) {    return {init: a,update: b,view: c,inputs: d};});
+   return _elm.StartApp.values = {_op: _op,start: start,Config: Config,App: App};
+};
+Elm.Link = Elm.Link || {};
+Elm.Link.make = function (_elm) {
+   "use strict";
+   _elm.Link = _elm.Link || {};
+   if (_elm.Link.values) return _elm.Link.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Dict = Elm.Dict.make(_elm),
+   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm);
+   var _op = {};
+   var sbool = function () {
+      var toBool = function (result) {
+         var _p0 = result;
+         if (_p0.ctor === "Ok") {
+               return $Result.Ok(_U.eq(_p0._0,1));
+            } else {
+               return $Result.Err(_p0._0);
+            }
+      };
+      return A2($Json$Decode.customDecoder,$Json$Decode.string,function (_p1) {    return toBool($String.toInt(_p1));});
+   }();
+   var Link = F6(function (a,b,c,d,e,f) {    return {id: a,title: b,url: c,excerpt: d,favorite: e,keep: f};});
+   var decodeLink = A7($Json$Decode.object6,
+   Link,
+   A2($Json$Decode._op[":="],"item_id",$Json$Decode.string),
+   A2($Json$Decode._op[":="],"given_title",$Json$Decode.string),
+   A2($Json$Decode._op[":="],"given_url",$Json$Decode.string),
+   $Json$Decode.maybe(A2($Json$Decode._op[":="],"excerpt",$Json$Decode.string)),
+   A2($Json$Decode._op[":="],"favorite",sbool),
+   $Json$Decode.succeed(false));
+   var decodeLinks = A2($Json$Decode.at,_U.list(["list"]),$Json$Decode.dict(decodeLink));
+   return _elm.Link.values = {_op: _op,decodeLink: decodeLink,decodeLinks: decodeLinks,Link: Link};
+};
+Elm.Selector = Elm.Selector || {};
+Elm.Selector.make = function (_elm) {
+   "use strict";
+   _elm.Selector = _elm.Selector || {};
+   if (_elm.Selector.values) return _elm.Selector.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Char = Elm.Char.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
+   $Keyboard = Elm.Keyboard.make(_elm),
+   $Link = Elm.Link.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm),
+   $String = Elm.String.make(_elm);
+   var _op = {};
+   var update = F2(function (action,model) {
+      var _p0 = action;
+      switch (_p0.ctor)
+      {case "Down": var findNext = F2(function (selected,list) {
+              findNext: while (true) {
+                 var _p1 = list;
+                 if (_p1.ctor === "::") {
+                       var _p2 = _p1._1;
+                       if (_U.eq($Basics.fst(_p1._0),selected)) return $List.head(_p2); else {
+                             var _v2 = selected,_v3 = _p2;
+                             selected = _v2;
+                             list = _v3;
+                             continue findNext;
+                          }
+                    } else {
+                       return $Maybe.Nothing;
+                    }
+              }
+           });
+           var _p3 = model.selected;
+           if (_p3.ctor === "Nothing") {
+                 return model;
+              } else {
+                 return _U.update(model,
+                 {selected: A2($Maybe.map,$Basics.fst,$Maybe.oneOf(_U.list([A2(findNext,_p3._0,model.links),$List.head(model.links)])))});
+              }
+         case "Up": var findPrev = F2(function (selected,list) {
+              findPrev: while (true) {
+                 var _p4 = list;
+                 if (_p4.ctor === "::") {
+                       if (_p4._1.ctor === "::") {
+                             var _p5 = _p4._1._0;
+                             if (_U.eq($Basics.fst(_p5),selected)) return $Maybe.Just(_p4._0); else {
+                                   var _v6 = selected,_v7 = A2($List._op["::"],_p5,_p4._1._1);
+                                   selected = _v6;
+                                   list = _v7;
+                                   continue findPrev;
+                                }
+                          } else {
+                             return $Maybe.Just(_p4._0);
+                          }
+                    } else {
+                       return $Maybe.Nothing;
+                    }
+              }
+           });
+           var _p6 = model.selected;
+           if (_p6.ctor === "Nothing") {
+                 return model;
+              } else {
+                 return _U.update(model,
+                 {selected: A2($Maybe.map,$Basics.fst,$Maybe.oneOf(_U.list([A2(findPrev,_p6._0,model.links),$List.head($List.reverse(model.links))])))});
+              }
+         case "Keep": var update$ = F2(function (selected,_p7) {
+              var _p8 = _p7;
+              var _p10 = _p8._1;
+              var _p9 = _p8._0;
+              return _U.eq(_p9,selected) ? {ctor: "_Tuple2",_0: _p9,_1: _U.update(_p10,{keep: $Basics.not(_p10.keep)})} : {ctor: "_Tuple2",_0: _p9,_1: _p10};
+           });
+           var _p11 = model.selected;
+           if (_p11.ctor === "Nothing") {
+                 return model;
+              } else {
+                 return _U.update(model,{links: A2($List.map,update$(_p11._0),model.links)});
+              }
+         default: return model;}
+   });
+   var Keep = {ctor: "Keep"};
+   var Down = {ctor: "Down"};
+   var Up = {ctor: "Up"};
+   var NoOp = {ctor: "NoOp"};
+   var keyToAction = function (key) {
+      var $char = $Char.fromCode(key);
+      return _U.eq($char,_U.chr("j")) ? Down : _U.eq($char,_U.chr("k")) ? Up : _U.eq($char,_U.chr("s")) ? Keep : NoOp;
+   };
+   var keyboard = A2($Signal.map,keyToAction,$Keyboard.presses);
+   var linkItem = F2(function (selected,_p12) {
+      var _p13 = _p12;
+      var _p16 = _p13._1;
+      var excerpt = function () {    var _p14 = _p16.excerpt;if (_p14.ctor === "Nothing") {    return "";} else {    return _p14._0;}}();
+      var title = function (link) {    return $String.isEmpty(link.title) ? link.url : link.title;};
+      var isSelected = function (link) {    var _p15 = selected;if (_p15.ctor === "Nothing") {    return false;} else {    return _U.eq(link.id,_p15._0);}};
+      var classes = _U.list([{ctor: "_Tuple2",_0: "link",_1: true}
+                            ,{ctor: "_Tuple2",_0: "link--selected",_1: isSelected(_p16)}
+                            ,{ctor: "_Tuple2",_0: "link--keep",_1: _p16.keep}
+                            ,{ctor: "_Tuple2",_0: "link--favorite",_1: _p16.favorite}]);
+      return A2($Html.div,
+      _U.list([$Html$Attributes.classList(classes)]),
+      _U.list([A2($Html.a,_U.list([$Html$Attributes.href(_p16.url),$Html$Attributes.target("_blank")]),_U.list([$Html.text(title(_p16))]))
+              ,A2($Html.p,_U.list([$Html$Attributes.$class("link__excerpt")]),_U.list([$Html.text(excerpt)]))]));
+   });
+   var view = function (model) {
+      return A2($Html.div,_U.list([$Html$Attributes.$class("links")]),_U.list([A2($Html.div,_U.list([]),A2($List.map,linkItem(model.selected),model.links))]));
+   };
+   var initialModel = function (links) {
+      var byIds = A2($List.map,function (link) {    return {ctor: "_Tuple2",_0: link.id,_1: link};},links);
+      return {links: byIds,selected: A2($Maybe.map,function (_) {    return _.id;},$List.head(links))};
+   };
+   var Model = F2(function (a,b) {    return {links: a,selected: b};});
+   return _elm.Selector.values = {_op: _op
+                                 ,Model: Model
+                                 ,initialModel: initialModel
+                                 ,view: view
+                                 ,linkItem: linkItem
+                                 ,NoOp: NoOp
+                                 ,Up: Up
+                                 ,Down: Down
+                                 ,Keep: Keep
+                                 ,update: update
+                                 ,keyToAction: keyToAction
+                                 ,keyboard: keyboard};
+};
+Elm.Styles = Elm.Styles || {};
+Elm.Styles.make = function (_elm) {
+   "use strict";
+   _elm.Styles = _elm.Styles || {};
+   if (_elm.Styles.values) return _elm.Styles.values;
+   var _U = Elm.Native.Utils.make(_elm),
+   $Basics = Elm.Basics.make(_elm),
+   $Debug = Elm.Debug.make(_elm),
+   $Html = Elm.Html.make(_elm),
+   $List = Elm.List.make(_elm),
+   $Maybe = Elm.Maybe.make(_elm),
+   $Result = Elm.Result.make(_elm),
+   $Signal = Elm.Signal.make(_elm);
+   var _op = {};
+   var styles = function () {
+      var css = "\n.container {\n  margin: auto;\n  width: 70%;\n}\n\n.stats__summary {\n  float: left;\n  padding-left: 5px;\n}\n\n.stats__progress {\n  float: right;\n  padding-right: 5px;\n}\n\n.links {\n  clear: both;\n}\n\n.link {\n  padding: 5px;\n}\n\na, a:link, a:hover, a:visited {\n  color: black;\n  text-decoration: none;\n}\n\n.link--selected, .link--selected a {\n  background-color: #0F5CBF;\n  color: white;\n}\n\n.link--keep, .link--keep a {\n  background-color: #F25C05;\n  color: white;\n}\n\n.link--favorite, .link--favorite a {\n  background-color: #F2CD13;\n  color: white;\n}\n\n.link__excerpt {\n  font-style: italic;\n  font-size: 0.8em;\n}\n";
+      return A3($Html.node,"style",_U.list([]),_U.list([$Html.text(css)]));
+   }();
+   return _elm.Styles.values = {_op: _op,styles: styles};
+};
 Elm.Triage = Elm.Triage || {};
 Elm.Triage.make = function (_elm) {
    "use strict";
@@ -10753,68 +11339,194 @@ Elm.Triage.make = function (_elm) {
    if (_elm.Triage.values) return _elm.Triage.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
+   $Char = Elm.Char.make(_elm),
    $Debug = Elm.Debug.make(_elm),
+   $Dict = Elm.Dict.make(_elm),
+   $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
+   $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $Http = Elm.Http.make(_elm),
-   $Json$Decode = Elm.Json.Decode.make(_elm),
+   $Json$Encode = Elm.Json.Encode.make(_elm),
+   $Keyboard = Elm.Keyboard.make(_elm),
+   $Link = Elm.Link.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
+   $Selector = Elm.Selector.make(_elm),
    $Signal = Elm.Signal.make(_elm),
+   $StartApp = Elm.StartApp.make(_elm),
+   $Styles = Elm.Styles.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
+   var getToken = Elm.Native.Port.make(_elm).inbound("getToken",
+   "Maybe.Maybe String",
+   function (v) {
+      return v === null ? Elm.Maybe.make(_elm).Nothing : Elm.Maybe.make(_elm).Just(typeof v === "string" || typeof v === "object" && v instanceof String ? v : _U.badPort("a string",
+      v));
+   });
+   var linksValue = function (links) {
+      var linkValue = function (link) {
+         return $Json$Encode.object(_U.list([{ctor: "_Tuple2",_0: "id",_1: $Json$Encode.string(link.id)}
+                                            ,{ctor: "_Tuple2",_0: "title",_1: $Json$Encode.string(link.title)}
+                                            ,{ctor: "_Tuple2",_0: "url",_1: $Json$Encode.string(link.url)}]));
+      };
+      return $Json$Encode.list(A2($List.map,linkValue,links));
+   };
+   var authed = F4(function (verb,token,url,body) {
+      return A2($Http.send,$Http.defaultSettings,{verb: verb,headers: _U.list([{ctor: "_Tuple2",_0: "token",_1: token}]),url: url,body: body});
+   });
+   var $delete = F2(function (token,links) {
+      return A2($Task.onError,
+      A4(authed,"DELETE",token,"http://localhost:8080/links",$Http.string(A2($Json$Encode.encode,0,linksValue(links)))),
+      function (err) {
+         return _U.crash("Triage",{start: {line: 235,column: 24},end: {line: 235,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+      });
+   });
+   var takeSnapshot = F3(function (page,n,links) {    return A2($List.take,10,A2($List.drop,(page - 1) * 10,links));});
+   var OnReceiveLinks = function (a) {    return {ctor: "OnReceiveLinks",_0: a};};
+   var Link = function (a) {    return {ctor: "Link",_0: a};};
+   var Reset = {ctor: "Reset"};
+   var Next = {ctor: "Next"};
+   var keyboard = function () {
+      var keyToAction = function (key) {
+         var $char = $Char.fromCode(key);
+         return _U.eq($char,_U.chr(" ")) ? Next : _U.eq($char,_U.chr("C")) ? Reset : Link($Selector.keyToAction(key));
+      };
+      return A2($Signal.map,keyToAction,$Keyboard.presses);
+   }();
+   var NoOp = {ctor: "NoOp"};
+   var deleteEffect = F2(function (token,links) {    return $Effects.task(A2($Task.map,$Basics.always(NoOp),$Task.toResult(A2($delete,token,links))));});
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
-      {case "Keep": var updateLink = function (l) {    return _U.eq(l.url,_p0._0) ? _U.update(l,{keep: _p0._1}) : l;};
-           return _U.update(model,{links: A2($List.map,updateLink,model.links)});
-         case "Fav": var updateLink = function (l) {    return _U.eq(l.url,_p0._0) ? _U.update(l,{favorite: _p0._1}) : l;};
-           return _U.update(model,{links: A2($List.map,updateLink,model.links)});
-         case "SetLinks": return _U.update(model,{links: _p0._0});
-         default: return model;}
+      {case "Next": var toDelete = function (_p1) {    var _p2 = _p1;var _p3 = _p2._1;return _p3.keep || _p3.favorite ? $Maybe.Nothing : $Maybe.Just(_p3);};
+           var deleted = A2($List.filterMap,toDelete,model.snapshot.links);
+           var effect = function () {
+              var _p4 = model.token;
+              if (_p4.ctor === "Nothing") {
+                    return $Effects.none;
+                 } else {
+                    return A2(deleteEffect,_p4._0,deleted);
+                 }
+           }();
+           var page = model.page + 1;
+           var snapshot = $Selector.initialModel(A3(takeSnapshot,page,model.perPage,model.links));
+           return $List.isEmpty(snapshot.links) ? {ctor: "_Tuple2",_0: _U.update(model,{done: true}),_1: effect} : {ctor: "_Tuple2"
+                                                                                                                   ,_0: _U.update(model,
+                                                                                                                   {snapshot: snapshot
+                                                                                                                   ,page: page
+                                                                                                                   ,deleted: A2($Basics._op["++"],
+                                                                                                                   model.deleted,
+                                                                                                                   deleted)})
+                                                                                                                   ,_1: effect};
+         case "Link": return {ctor: "_Tuple2",_0: _U.update(model,{snapshot: A2($Selector.update,_p0._0,model.snapshot)}),_1: $Effects.none};
+         case "OnReceiveLinks": var _p5 = _p0._0;
+           return {ctor: "_Tuple2"
+                  ,_0: _U.update(model,{links: _p5,snapshot: $Selector.initialModel(A3(takeSnapshot,model.page,model.perPage,_p5)),done: $List.isEmpty(_p5)})
+                  ,_1: $Effects.none};
+         case "Reset": var page = 1;
+           return {ctor: "_Tuple2"
+                  ,_0: _U.update(model,{snapshot: $Selector.initialModel(A3(takeSnapshot,page,model.perPage,model.links)),page: 1,deleted: _U.list([])})
+                  ,_1: $Effects.none};
+         default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
    });
-   var NoOp = {ctor: "NoOp"};
-   var SetLinks = function (a) {    return {ctor: "SetLinks",_0: a};};
-   var Fav = F2(function (a,b) {    return {ctor: "Fav",_0: a,_1: b};});
-   var Keep = F2(function (a,b) {    return {ctor: "Keep",_0: a,_1: b};});
-   var linkItem = function (link) {    return A2($Html.li,_U.list([]),_U.list([$Html.text(link.title)]));};
-   var view = function (model) {
+   var stats = function (model) {
+      var deleted = $List.length(model.deleted);
+      var total = $List.length(model.links);
       return A2($Html.div,
       _U.list([]),
-      _U.list([A2($Html.h2,_U.list([]),_U.list([$Html.text("Selection # of #")])),A2($Html.ul,_U.list([]),A2($List.map,linkItem,model.links))]));
+      _U.list([A2($Html.p,
+              _U.list([$Html$Attributes.$class("stats__summary")]),
+              _U.list([$Html.text(A2($Basics._op["++"],
+                      "page ",
+                      A2($Basics._op["++"],$Basics.toString(model.page),A2($Basics._op["++"]," of ",$Basics.toString(total / model.perPage | 0)))))
+                      ,$Html.text(A2($Basics._op["++"]," (",A2($Basics._op["++"],$Basics.toString(total)," items)")))]))
+              ,A2($Html.p,
+              _U.list([$Html$Attributes.$class("stats__progress")]),
+              _U.list([$Html.text(A2($Basics._op["++"],$Basics.toString(deleted)," deleted"))]))]));
    };
-   var emptyModel = {links: _U.list([])};
-   var Link = F4(function (a,b,c,d) {    return {title: a,url: b,favorite: c,keep: d};});
-   var link = A5($Json$Decode.object4,
-   Link,
-   A2($Json$Decode._op[":="],"title",$Json$Decode.string),
-   A2($Json$Decode._op[":="],"link",$Json$Decode.string),
-   A2($Json$Decode._op[":="],"keep",$Json$Decode.bool),
-   A2($Json$Decode._op[":="],"favorite",$Json$Decode.bool));
-   var get = A2($Http.get,$Json$Decode.list(link),"./static/data.json");
-   var Model = function (a) {    return {links: a};};
+   var view = F2(function (address,model) {
+      return _U.eq(model.token,$Maybe.Nothing) ? A2($Html.div,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([$Styles.styles
+              ,A2($Html.p,_U.list([]),_U.list([$Html.text("You are not logged!")]))
+              ,A2($Html.a,
+              _U.list([$Html$Attributes.href("http://localhost:8080/oauth/request")]),
+              _U.list([$Html.text("Login to continue")]))])) : model.done ? A2($Html.div,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([$Styles.styles
+              ,A2($Html.p,_U.list([]),_U.list([$Html.text("Well done! No more work right now.")]))
+              ,A2($Html.p,
+              _U.list([]),
+              _U.list([$Html.text(A2($Basics._op["++"],
+              "You deleted ",
+              A2($Basics._op["++"],$Basics.toString($List.length(model.deleted))," items")))]))])) : $List.isEmpty(model.links) ? A2($Html.div,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([$Styles.styles,A2($Html.p,_U.list([]),_U.list([$Html.text("Loading...")]))])) : A2($Html.div,
+      _U.list([$Html$Attributes.$class("container")]),
+      _U.list([$Styles.styles,stats(model),$Selector.view(model.snapshot)]));
+   });
+   var emptyModel = {links: _U.list([])
+                    ,snapshot: $Selector.initialModel(_U.list([]))
+                    ,page: 1
+                    ,perPage: 10
+                    ,deleted: _U.list([])
+                    ,token: A2($Debug.log,"token",getToken)
+                    ,done: false};
+   var Model = F7(function (a,b,c,d,e,f,g) {    return {links: a,snapshot: b,page: c,perPage: d,deleted: e,token: f,done: g};});
    var actions = $Signal.mailbox(NoOp);
-   var model = A3($Signal.foldp,update,emptyModel,actions.signal);
-   var main = A2($Signal.map,view,model);
-   var runner = Elm.Native.Task.make(_elm).perform(A2($Task.andThen,
-   get,
-   function (links) {
-      return A2($Signal.send,actions.address,SetLinks(A2($Debug.log,"links",links)));
-   }));
+   var app = $StartApp.start({init: {ctor: "_Tuple2",_0: emptyModel,_1: $Effects.none},view: view,update: update,inputs: _U.list([keyboard,actions.signal])});
+   var model = app.model;
+   var main = app.html;
+   var tasks = Elm.Native.Task.make(_elm).performSignal("tasks",app.tasks);
+   var get = function (token) {
+      return A2($Task.onError,
+      A2($Task.andThen,
+      A2($Task.andThen,
+      A2($Http.fromJson,$Link.decodeLinks,A4(authed,"GET",token,"http://localhost:8080/links",$Http.empty)),
+      function (dict) {
+         return $Task.succeed($Dict.values(dict));
+      }),
+      function (_p6) {
+         return A2($Signal.send,actions.address,OnReceiveLinks(_p6));
+      }),
+      function (err) {
+         return _U.crash("Triage",{start: {line: 214,column: 24},end: {line: 214,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+      });
+   };
+   var runner = Elm.Native.Task.make(_elm).performSignal("runner",
+   function () {
+      var validToken = function (model) {
+         var _p7 = model.token;
+         if (_p7.ctor === "Just") {
+               return $Maybe.Just(_p7._0);
+            } else {
+               return $Maybe.Nothing;
+            }
+      };
+      var areLinksEmpty = function (model) {    return $List.isEmpty(model.links);};
+      return A2($Signal.map,function (token) {    return get(token);},A3($Signal.filterMap,validToken,"",A3($Signal.filter,areLinksEmpty,emptyModel,model)));
+   }());
    return _elm.Triage.values = {_op: _op
                                ,actions: actions
+                               ,app: app
                                ,model: model
                                ,main: main
                                ,Model: Model
-                               ,Link: Link
                                ,emptyModel: emptyModel
                                ,view: view
-                               ,linkItem: linkItem
-                               ,Keep: Keep
-                               ,Fav: Fav
-                               ,SetLinks: SetLinks
+                               ,stats: stats
                                ,NoOp: NoOp
+                               ,Next: Next
+                               ,Reset: Reset
+                               ,Link: Link
+                               ,OnReceiveLinks: OnReceiveLinks
+                               ,takeSnapshot: takeSnapshot
                                ,update: update
-                               ,link: link
-                               ,get: get};
+                               ,authed: authed
+                               ,get: get
+                               ,linksValue: linksValue
+                               ,$delete: $delete
+                               ,deleteEffect: deleteEffect
+                               ,keyboard: keyboard};
 };
