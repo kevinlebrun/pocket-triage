@@ -106,7 +106,6 @@ func AuthInit(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// TODO handle 403
 func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 	request_token := r.URL.Query().Get("request_token")
 
