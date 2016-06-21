@@ -1,40 +1,38 @@
-module Triage (..) where
+module Triage exposing (..)
 
 import Char exposing (fromCode)
 import Dict
-import Effects exposing (Effects)
 import Html exposing (..)
+import Html.App
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
 import Keyboard
 import Link exposing (..)
 import Selector
-import StartApp
 import Task exposing (Task, andThen, onError, succeed)
+import Ports
 
 
-actions : Signal.Mailbox Action
-actions =
-  Signal.mailbox NoOp
-
-
-app =
-  StartApp.start
-    { init = ( emptyModel, Effects.none )
+main : Program { token : Maybe String }
+main =
+  Html.App.programWithFlags
+    { init = init
     , view = view
     , update = update
-    , inputs = [ keyboard, actions.signal ]
+    , subscriptions = subscriptions
     }
 
-
-model : Signal Model
-model =
-  app.model
-
-
-main =
-  app.html
+init flags =
+  let
+    cmd =
+      case flags.token of
+        Just token ->
+          doRefresh token
+        Nothing ->
+          Cmd.none
+  in
+    ( emptyModel flags.token, cmd )
 
 
 type alias Model =
@@ -48,20 +46,20 @@ type alias Model =
   }
 
 
-emptyModel : Model
-emptyModel =
+emptyModel : Maybe String -> Model
+emptyModel token =
   { links = []
   , snapshot = Selector.initialModel []
   , page = 1
   , perPage = 10
   , deleted = []
-  , token = Debug.log "token" getToken
+  , token = Debug.log "token" token
   , done = False
   }
 
 
-view : Signal.Address Action -> Model -> Html
-view address model =
+view : Model -> Html Msg
+view model =
   if model.token == Nothing then
     div
       [ class "container" ]
@@ -83,11 +81,11 @@ view address model =
     div
       [ class "container" ]
       [ stats model
-      , Selector.view model.snapshot
+      , Html.App.map Link <| Selector.view model.snapshot
       ]
 
 
-stats : Model -> Html
+stats : Model -> Html Msg
 stats model =
   let
     total =
@@ -107,10 +105,10 @@ stats model =
       ]
 
 
-type Action
+type Msg
   = NoOp
   | Next
-  | Link Selector.Action
+  | Link Selector.Msg
   | OnReceiveLinks (List Link)
   | HttpError String
 
@@ -119,7 +117,7 @@ takeSnapshot page n links =
   List.take 10 <| List.drop ((page - 1) * 10) links
 
 
-update : Action -> Model -> ( Model, Effects Action )
+update : Msg -> Model -> ( Model, Cmd Msg )
 update action model =
   case action of
     Next ->
@@ -139,27 +137,27 @@ update action model =
         snapshot =
           Selector.initialModel <| takeSnapshot page model.perPage model.links
 
-        effect =
+        cmd =
           case model.token of
             Nothing ->
-              Effects.none
+              Cmd.none
 
             Just token ->
-              Effects.batch [deleteEffect token deleted, sendDeleted deleted]
+              Cmd.batch [doDelete token deleted, Ports.deletedLinks deleted]
       in
         if List.isEmpty snapshot.links then
-          ( { model | done = True }, effect )
+          ( { model | done = True }, cmd )
         else
           ( { model
               | snapshot = snapshot
               , page = page
               , deleted = model.deleted ++ deleted
             }
-          , effect
+          , cmd
           )
 
     Link action' ->
-      ( { model | snapshot = Selector.update action' model.snapshot }, Effects.none )
+      ( { model | snapshot = Selector.update action' model.snapshot }, Cmd.none )
 
     OnReceiveLinks links' ->
       ( { model
@@ -167,14 +165,14 @@ update action model =
           , snapshot = Selector.initialModel <| takeSnapshot model.page model.perPage links'
           , done = List.isEmpty links'
         }
-      , Effects.none
+      , Cmd.none
       )
 
     HttpError error ->
-      ( always {model | token = Nothing} <| Debug.log "error" error , Effects.none )
+      ( always {model | token = Nothing} <| Debug.log "error" error , Cmd.none )
 
     NoOp ->
-      ( model, Effects.none )
+      ( model, Cmd.none )
 
 
 authed verb token url body =
@@ -187,76 +185,38 @@ authed verb token url body =
     }
 
 
-get : String -> Task Http.Error ()
+get : String -> Task Http.Error (List Link)
 get token =
   (Http.fromJson Link.decodeLinks
     <| authed "GET" token "http://localhost:8080/links" Http.empty
   )
     `andThen` (\dict -> succeed (Dict.values dict))
-    `andThen` (OnReceiveLinks >> Signal.send actions.address)
-    `onError` (toString >> HttpError >> Signal.send actions.address)
 
+doRefresh token =
+  Task.perform (toString >> HttpError) OnReceiveLinks <| get token
 
 delete token links =
   (authed "DELETE" token "http://localhost:8080/links" <| Http.string <| encodeLinks links)
     `onError` (\err -> Debug.crash (always "Error!" (Debug.log "Error: " err)))
 
 
-deleteEffect token links =
-  delete token links
-    |> Task.toResult
-    |> Task.map (always NoOp)
-    |> Effects.task
+doDelete token links =
+  Task.perform (always NoOp) (always NoOp) <| delete token links
 
 
-sendDeleted links =
-  Signal.send deleted.address links
-    |> Task.map (always NoOp)
-    |> Effects.task
+-- SUBSCRIPTIONS
 
 
-deleted : Signal.Mailbox (List Link)
-deleted =
-  Signal.mailbox []
-
-
--- SIGNALS
-
-
-keyboard : Signal Action
+keyboard : Sub Msg
 keyboard =
   let
-    keyToAction key =
+    keyToMsg key =
       if key == 13 then
         Next
       else
-        Link (Selector.keyToAction key)
+        Link (Selector.keyToMsg key)
   in
-    Signal.map keyToAction Keyboard.presses
+    Keyboard.presses keyToMsg
 
-
-port runner : Signal (Task Http.Error ())
-port runner =
-  let
-    areLinksEmpty model =
-      List.isEmpty model.links
-
-    validToken model =
-      case model.token of
-        Just token ->
-          Just token
-
-        Nothing ->
-          Nothing
-  in
-    Signal.map (\token -> get token) <| Signal.filterMap validToken "" <| Signal.filter areLinksEmpty emptyModel model
-
-
-port deletedLinks : Signal (List Link)
-port deletedLinks =
-  deleted.signal
-
-port getToken : Maybe String
-port tasks : Signal (Task Effects.Never ())
-port tasks =
-  app.tasks
+subscriptions model =
+  keyboard

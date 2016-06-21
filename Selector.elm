@@ -1,4 +1,4 @@
-module Selector (..) where
+module Selector exposing (..)
 
 import Char exposing (fromCode, KeyCode)
 import Keyboard
@@ -25,7 +25,7 @@ initialModel links =
     }
 
 
-view : Model -> Html
+view : Model -> Html Msg
 view model =
   div
     [ class "links" ]
@@ -33,7 +33,7 @@ view model =
     ]
 
 
-linkItem : Maybe Id -> ( Id, Link ) -> Html
+linkItem : Maybe Id -> ( Id, Link ) -> Html Msg
 linkItem selected ( _, link ) =
   let
     isSelected link =
@@ -76,14 +76,14 @@ linkItem selected ( _, link ) =
 -- UPDATE
 
 
-type Action
+type Msg
   = NoOp
   | Up
   | Down
   | Keep
 
 
-update : Action -> Model -> Model
+update : Msg -> Model -> Model
 update action model =
   case action of
     Down ->
@@ -154,8 +154,8 @@ update action model =
 -- SIGNALS
 
 
-keyToAction : KeyCode -> Action
-keyToAction key =
+keyToMsg : KeyCode -> Msg
+keyToMsg key =
   let
     char =
       fromCode key
@@ -170,6 +170,6 @@ keyToAction key =
       NoOp
 
 
-keyboard : Signal Action
+keyboard : Sub Msg
 keyboard =
-  Signal.map keyToAction Keyboard.presses
+  Keyboard.presses keyToMsg

@@ -1,4 +1,4 @@
-module Link (Link, Id, decodeLinks, encodeLinks) where
+module Link exposing (Link, Id, decodeLinks, encodeLinks)
 
 import Dict
 import Json.Decode exposing ((:=))

@@ -9,6 +9,6 @@
   "author": "Kevin LE BRUN <lebrun.k@gmail.com>",
   "license": "MIT",
   "dependencies": {
-    "elm": "^0.16.0"
+    "elm": "^0.17.0"
   }
 }
