@@ -12,7 +12,6 @@ import Keyboard
 import Link exposing (..)
 import Selector
 import StartApp
-import Styles exposing (..)
 import Task exposing (Task, andThen, onError, succeed)
 
 
@@ -64,32 +63,29 @@ emptyModel =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
+  -- TODO refactor
   if model.token == Nothing then
     -- TODO refactor with proper Anonymous tag
     div
       [ class "container" ]
-      [ styles
-      , p [] [ text "You are not logged!" ]
+      [ p [] [ text "You are not logged!" ]
       , a [ href "http://localhost:8080/oauth/request" ] [ text "Login to continue" ]
       ]
   else if model.done then
     div
       [ class "container" ]
-      [ styles
-      , p [] [ text "Well done! No more work right now." ]
+      [ p [] [ text "Well done! No more work right now." ]
       , p [] [ text ("You deleted " ++ (toString <| List.length model.deleted) ++ " items") ]
       ]
   else if List.isEmpty model.links then
     div
       [ class "container" ]
-      [ styles
-      , p [] [ text "Loading..." ]
+      [ p [] [ text "Loading..." ]
       ]
   else
     div
       [ class "container" ]
-      [ styles
-      , stats model
+      [ stats model
       , Selector.view model.snapshot
       ]
 
@@ -119,6 +115,7 @@ type Action
   | Next
   | Link Selector.Action
   | OnReceiveLinks (List Link)
+  | HttpError String
 
 
 takeSnapshot page n links =
@@ -176,6 +173,9 @@ update action model =
       , Effects.none
       )
 
+    HttpError error ->
+      ( always {model | token = Nothing} <| Debug.log "error" error , Effects.none )
+
     NoOp ->
       ( model, Effects.none )
 
@@ -197,11 +197,11 @@ get token =
   )
     `andThen` (\dict -> succeed (Dict.values dict))
     `andThen` (OnReceiveLinks >> Signal.send actions.address)
-    `onError` (\err -> Debug.crash (always "Error!" (Debug.log "Error: " err)))
+    `onError` (toString >> HttpError >> Signal.send actions.address)
 
 
 
--- delete : String -> List Link -> Task Http.Error ()
+-- TODO move into Link.elm
 
 
 linksValue links =

@@ -1,0 +1,14 @@
+{
+  "name": "pocket-triage",
+  "version": "1.0.0",
+  "description": "Pocket Triage a simpler way to manage large pocket lists",
+  "main": "static/index.html",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Kevin LE BRUN <lebrun.k@gmail.com>",
+  "license": "MIT",
+  "dependencies": {
+    "elm": "^0.16.0"
+  }
+}

@@ -11312,26 +11312,6 @@ Elm.Selector.make = function (_elm) {
                                  ,keyToAction: keyToAction
                                  ,keyboard: keyboard};
 };
-Elm.Styles = Elm.Styles || {};
-Elm.Styles.make = function (_elm) {
-   "use strict";
-   _elm.Styles = _elm.Styles || {};
-   if (_elm.Styles.values) return _elm.Styles.values;
-   var _U = Elm.Native.Utils.make(_elm),
-   $Basics = Elm.Basics.make(_elm),
-   $Debug = Elm.Debug.make(_elm),
-   $Html = Elm.Html.make(_elm),
-   $List = Elm.List.make(_elm),
-   $Maybe = Elm.Maybe.make(_elm),
-   $Result = Elm.Result.make(_elm),
-   $Signal = Elm.Signal.make(_elm);
-   var _op = {};
-   var styles = function () {
-      var css = "\n.container {\n  margin: auto;\n  width: 70%;\n}\n\n.stats__summary {\n  float: left;\n  padding-left: 5px;\n}\n\n.stats__progress {\n  float: right;\n  padding-right: 5px;\n}\n\n.links {\n  clear: both;\n}\n\n.link {\n  padding: 5px;\n  border-left: 5px solid transparent;\n}\n\na, a:link, a:hover, a:visited {\n  color: black;\n  text-decoration: none;\n}\n\n.link--selected, .link--selected a {\n  background-color: #0F5CBF;\n  color: white;\n}\n\n.link--keep {\n  border-left: 5px solid #F25C05;\n}\n\n.link--favorite {\n  border-left: 5px solid #F2CD13;\n}\n\n.link__excerpt {\n  font-style: italic;\n  font-size: 0.8em;\n}\n";
-      return A3($Html.node,"style",_U.list([]),_U.list([$Html.text(css)]));
-   }();
-   return _elm.Styles.values = {_op: _op,styles: styles};
-};
 Elm.Triage = Elm.Triage || {};
 Elm.Triage.make = function (_elm) {
    "use strict";
@@ -11355,7 +11335,6 @@ Elm.Triage.make = function (_elm) {
    $Selector = Elm.Selector.make(_elm),
    $Signal = Elm.Signal.make(_elm),
    $StartApp = Elm.StartApp.make(_elm),
-   $Styles = Elm.Styles.make(_elm),
    $Task = Elm.Task.make(_elm);
    var _op = {};
    var getToken = Elm.Native.Port.make(_elm).inbound("getToken",
@@ -11383,6 +11362,7 @@ Elm.Triage.make = function (_elm) {
       });
    });
    var takeSnapshot = F3(function (page,n,links) {    return A2($List.take,10,A2($List.drop,(page - 1) * 10,links));});
+   var HttpError = function (a) {    return {ctor: "HttpError",_0: a};};
    var OnReceiveLinks = function (a) {    return {ctor: "OnReceiveLinks",_0: a};};
    var Link = function (a) {    return {ctor: "Link",_0: a};};
    var Next = {ctor: "Next"};
@@ -11420,6 +11400,9 @@ Elm.Triage.make = function (_elm) {
            return {ctor: "_Tuple2"
                   ,_0: _U.update(model,{links: _p5,snapshot: $Selector.initialModel(A3(takeSnapshot,model.page,model.perPage,_p5)),done: $List.isEmpty(_p5)})
                   ,_1: $Effects.none};
+         case "HttpError": return {ctor: "_Tuple2"
+                                  ,_0: A2($Basics.always,_U.update(model,{token: $Maybe.Nothing}),A2($Debug.log,"error",_p0._0))
+                                  ,_1: $Effects.none};
          default: return {ctor: "_Tuple2",_0: model,_1: $Effects.none};}
    });
    var stats = function (model) {
@@ -11440,23 +11423,21 @@ Elm.Triage.make = function (_elm) {
    var view = F2(function (address,model) {
       return _U.eq(model.token,$Maybe.Nothing) ? A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
-      _U.list([$Styles.styles
-              ,A2($Html.p,_U.list([]),_U.list([$Html.text("You are not logged!")]))
+      _U.list([A2($Html.p,_U.list([]),_U.list([$Html.text("You are not logged!")]))
               ,A2($Html.a,
               _U.list([$Html$Attributes.href("http://localhost:8080/oauth/request")]),
               _U.list([$Html.text("Login to continue")]))])) : model.done ? A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
-      _U.list([$Styles.styles
-              ,A2($Html.p,_U.list([]),_U.list([$Html.text("Well done! No more work right now.")]))
+      _U.list([A2($Html.p,_U.list([]),_U.list([$Html.text("Well done! No more work right now.")]))
               ,A2($Html.p,
               _U.list([]),
               _U.list([$Html.text(A2($Basics._op["++"],
               "You deleted ",
               A2($Basics._op["++"],$Basics.toString($List.length(model.deleted))," items")))]))])) : $List.isEmpty(model.links) ? A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
-      _U.list([$Styles.styles,A2($Html.p,_U.list([]),_U.list([$Html.text("Loading...")]))])) : A2($Html.div,
+      _U.list([A2($Html.p,_U.list([]),_U.list([$Html.text("Loading...")]))])) : A2($Html.div,
       _U.list([$Html$Attributes.$class("container")]),
-      _U.list([$Styles.styles,stats(model),$Selector.view(model.snapshot)]));
+      _U.list([stats(model),$Selector.view(model.snapshot)]));
    });
    var emptyModel = {links: _U.list([])
                     ,snapshot: $Selector.initialModel(_U.list([]))
@@ -11482,16 +11463,16 @@ Elm.Triage.make = function (_elm) {
       function (_p6) {
          return A2($Signal.send,actions.address,OnReceiveLinks(_p6));
       }),
-      function (err) {
-         return _U.crash("Triage",{start: {line: 200,column: 24},end: {line: 200,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+      function (_p7) {
+         return A2($Signal.send,actions.address,HttpError($Basics.toString(_p7)));
       });
    };
    var runner = Elm.Native.Task.make(_elm).performSignal("runner",
    function () {
       var validToken = function (model) {
-         var _p7 = model.token;
-         if (_p7.ctor === "Just") {
-               return $Maybe.Just(_p7._0);
+         var _p8 = model.token;
+         if (_p8.ctor === "Just") {
+               return $Maybe.Just(_p8._0);
             } else {
                return $Maybe.Nothing;
             }
@@ -11512,6 +11493,7 @@ Elm.Triage.make = function (_elm) {
                                ,Next: Next
                                ,Link: Link
                                ,OnReceiveLinks: OnReceiveLinks
+                               ,HttpError: HttpError
                                ,takeSnapshot: takeSnapshot
                                ,update: update
                                ,authed: authed
