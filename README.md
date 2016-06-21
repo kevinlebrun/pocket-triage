@@ -4,6 +4,7 @@ A simple way to clean up your Pocket links in close to no time.
 
 ## Usage
 
+    $ glide install
     $ npm install
     $ ./node_modules/.bin/elm-package install
     $ ./node_modules/.bin/elm-make Triage.elm --output static/triage.js
