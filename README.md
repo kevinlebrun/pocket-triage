@@ -11,3 +11,7 @@ A simple way to clean up your Pocket links in close to no time.
     $ go run *.go
 
 Then open your browser to `http://localhost:8080`.
+
+## License
+
+The MIT license
