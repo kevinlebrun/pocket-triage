@@ -31,7 +31,11 @@
             }
 
             var token = localStorage.getItem('token');
-            Elm.embed(Elm.Triage, document.getElementById("triage-ui"), { getToken: token });
+            var app = Elm.embed(Elm.Triage, document.getElementById("triage-ui"), { getToken: token });
+
+            app.ports.deletedLinks.subscribe(function (links) {
+                console.log('deleted', links)
+            });
         </script>
     </body>
 

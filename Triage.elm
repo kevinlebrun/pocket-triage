@@ -145,7 +145,7 @@ update action model =
               Effects.none
 
             Just token ->
-              deleteEffect token deleted
+              Effects.batch [deleteEffect token deleted, sendDeleted deleted]
       in
         if List.isEmpty snapshot.links then
           ( { model | done = True }, effect )
@@ -209,6 +209,16 @@ deleteEffect token links =
     |> Effects.task
 
 
+sendDeleted links =
+  Signal.send deleted.address links
+    |> Task.map (always NoOp)
+    |> Effects.task
+
+
+deleted : Signal.Mailbox (List Link)
+deleted =
+  Signal.mailbox []
+
 
 -- SIGNALS
 
@@ -241,6 +251,10 @@ port runner =
   in
     Signal.map (\token -> get token) <| Signal.filterMap validToken "" <| Signal.filter areLinksEmpty emptyModel model
 
+
+port deletedLinks : Signal (List Link)
+port deletedLinks =
+  deleted.signal
 
 port getToken : Maybe String
 port tasks : Signal (Task Effects.Never ())

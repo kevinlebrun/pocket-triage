@@ -11350,6 +11350,14 @@ Elm.Triage.make = function (_elm) {
       return v === null ? Elm.Maybe.make(_elm).Nothing : Elm.Maybe.make(_elm).Just(typeof v === "string" || typeof v === "object" && v instanceof String ? v : _U.badPort("a string",
       v));
    });
+   var deleted = $Signal.mailbox(_U.list([]));
+   var deletedLinks = Elm.Native.Port.make(_elm).outboundSignal("deletedLinks",
+   function (v) {
+      return Elm.Native.List.make(_elm).toArray(v).map(function (v) {
+         return {id: v.id,title: v.title,url: v.url,excerpt: v.excerpt.ctor === "Nothing" ? null : v.excerpt._0,favorite: v.favorite,keep: v.keep};
+      });
+   },
+   deleted.signal);
    var authed = F4(function (verb,token,url,body) {
       return A2($Http.send,$Http.defaultSettings,{verb: verb,headers: _U.list([{ctor: "_Tuple2",_0: "token",_1: token}]),url: url,body: body});
    });
@@ -11357,7 +11365,7 @@ Elm.Triage.make = function (_elm) {
       return A2($Task.onError,
       A4(authed,"DELETE",token,"http://localhost:8080/links",$Http.string($Link.encodeLinks(links))),
       function (err) {
-         return _U.crash("Triage",{start: {line: 204,column: 24},end: {line: 204,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+         return _U.crash("Triage",{start: {line: 202,column: 24},end: {line: 202,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
       });
    });
    var takeSnapshot = F3(function (page,n,links) {    return A2($List.take,10,A2($List.drop,(page - 1) * 10,links));});
@@ -11371,6 +11379,7 @@ Elm.Triage.make = function (_elm) {
    }();
    var NoOp = {ctor: "NoOp"};
    var deleteEffect = F2(function (token,links) {    return $Effects.task(A2($Task.map,$Basics.always(NoOp),$Task.toResult(A2($delete,token,links))));});
+   var sendDeleted = function (links) {    return $Effects.task(A2($Task.map,$Basics.always(NoOp),A2($Signal.send,deleted.address,links)));};
    var update = F2(function (action,model) {
       var _p0 = action;
       switch (_p0.ctor)
@@ -11381,7 +11390,7 @@ Elm.Triage.make = function (_elm) {
               if (_p4.ctor === "Nothing") {
                     return $Effects.none;
                  } else {
-                    return A2(deleteEffect,_p4._0,deleted);
+                    return $Effects.batch(_U.list([A2(deleteEffect,_p4._0,deleted),sendDeleted(deleted)]));
                  }
            }();
            var page = model.page + 1;
@@ -11499,5 +11508,7 @@ Elm.Triage.make = function (_elm) {
                                ,get: get
                                ,$delete: $delete
                                ,deleteEffect: deleteEffect
+                               ,sendDeleted: sendDeleted
+                               ,deleted: deleted
                                ,keyboard: keyboard};
 };
