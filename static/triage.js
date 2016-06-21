@@ -8441,31 +8441,81 @@ var _user$project$Selector$update = F2(
 								model.links)
 						});
 				}
+			case 'Click':
+				var _p16 = _p0._0;
+				var update$ = F2(
+					function (selected, _p12) {
+						var _p13 = _p12;
+						var _p15 = _p13._1;
+						var _p14 = _p13._0;
+						return _elm_lang$core$Native_Utils.eq(_p14, selected) ? {
+							ctor: '_Tuple2',
+							_0: _p14,
+							_1: _elm_lang$core$Native_Utils.update(
+								_p15,
+								{
+									keep: _elm_lang$core$Basics$not(_p15.keep)
+								})
+						} : {ctor: '_Tuple2', _0: _p14, _1: _p15};
+					});
+				return _elm_lang$core$Native_Utils.update(
+					model,
+					{
+						selected: _elm_lang$core$Maybe$Just(_p16),
+						links: A2(
+							_elm_lang$core$List$map,
+							update$(_p16),
+							model.links)
+					});
 			default:
 				return model;
 		}
 	});
+var _user$project$Selector$initialModel = function (links) {
+	var byIds = A2(
+		_elm_lang$core$List$map,
+		function (link) {
+			return {ctor: '_Tuple2', _0: link.id, _1: link};
+		},
+		links);
+	return {
+		links: byIds,
+		selected: A2(
+			_elm_lang$core$Maybe$map,
+			function (_) {
+				return _.id;
+			},
+			_elm_lang$core$List$head(links))
+	};
+};
+var _user$project$Selector$Model = F2(
+	function (a, b) {
+		return {links: a, selected: b};
+	});
+var _user$project$Selector$Click = function (a) {
+	return {ctor: 'Click', _0: a};
+};
 var _user$project$Selector$linkItem = F2(
-	function (selected, _p12) {
-		var _p13 = _p12;
-		var _p16 = _p13._1;
+	function (selected, _p17) {
+		var _p18 = _p17;
+		var _p21 = _p18._1;
 		var excerpt = function () {
-			var _p14 = _p16.excerpt;
-			if (_p14.ctor === 'Nothing') {
+			var _p19 = _p21.excerpt;
+			if (_p19.ctor === 'Nothing') {
 				return '';
 			} else {
-				return _p14._0;
+				return _p19._0;
 			}
 		}();
 		var title = function (link) {
 			return _elm_lang$core$String$isEmpty(link.title) ? link.url : link.title;
 		};
 		var isSelected = function (link) {
-			var _p15 = selected;
-			if (_p15.ctor === 'Nothing') {
+			var _p20 = selected;
+			if (_p20.ctor === 'Nothing') {
 				return false;
 			} else {
-				return _elm_lang$core$Native_Utils.eq(link.id, _p15._0);
+				return _elm_lang$core$Native_Utils.eq(link.id, _p20._0);
 			}
 		};
 		var classes = _elm_lang$core$Native_List.fromArray(
@@ -8474,16 +8524,18 @@ var _user$project$Selector$linkItem = F2(
 				{
 				ctor: '_Tuple2',
 				_0: 'link--selected',
-				_1: isSelected(_p16)
+				_1: isSelected(_p21)
 			},
-				{ctor: '_Tuple2', _0: 'link--keep', _1: _p16.keep},
-				{ctor: '_Tuple2', _0: 'link--favorite', _1: _p16.favorite}
+				{ctor: '_Tuple2', _0: 'link--keep', _1: _p21.keep},
+				{ctor: '_Tuple2', _0: 'link--favorite', _1: _p21.favorite}
 			]);
 		return A2(
 			_elm_lang$html$Html$div,
 			_elm_lang$core$Native_List.fromArray(
 				[
-					_elm_lang$html$Html_Attributes$classList(classes)
+					_elm_lang$html$Html_Attributes$classList(classes),
+					_elm_lang$html$Html_Events$onClick(
+					_user$project$Selector$Click(_p18._0))
 				]),
 			_elm_lang$core$Native_List.fromArray(
 				[
@@ -8491,13 +8543,13 @@ var _user$project$Selector$linkItem = F2(
 					_elm_lang$html$Html$a,
 					_elm_lang$core$Native_List.fromArray(
 						[
-							_elm_lang$html$Html_Attributes$href(_p16.url),
+							_elm_lang$html$Html_Attributes$href(_p21.url),
 							_elm_lang$html$Html_Attributes$target('_blank')
 						]),
 					_elm_lang$core$Native_List.fromArray(
 						[
 							_elm_lang$html$Html$text(
-							title(_p16))
+							title(_p21))
 						])),
 					A2(
 					_elm_lang$html$Html$p,
@@ -8530,27 +8582,6 @@ var _user$project$Selector$view = function (model) {
 					model.links))
 			]));
 };
-var _user$project$Selector$initialModel = function (links) {
-	var byIds = A2(
-		_elm_lang$core$List$map,
-		function (link) {
-			return {ctor: '_Tuple2', _0: link.id, _1: link};
-		},
-		links);
-	return {
-		links: byIds,
-		selected: A2(
-			_elm_lang$core$Maybe$map,
-			function (_) {
-				return _.id;
-			},
-			_elm_lang$core$List$head(links))
-	};
-};
-var _user$project$Selector$Model = F2(
-	function (a, b) {
-		return {links: a, selected: b};
-	});
 var _user$project$Selector$Keep = {ctor: 'Keep'};
 var _user$project$Selector$Down = {ctor: 'Down'};
 var _user$project$Selector$Up = {ctor: 'Up'};
@@ -8582,7 +8613,7 @@ var _user$project$Triage$authed = F4(
 				body: body
 			});
 	});
-var _user$project$Triage$get = function (token) {
+var _user$project$Triage$getLinks = function (token) {
 	return A2(
 		_elm_lang$core$Task$andThen,
 		A2(
@@ -8609,8 +8640,8 @@ var _user$project$Triage$delete = F2(
 				return _elm_lang$core$Native_Utils.crash(
 					'Triage',
 					{
-						start: {line: 200, column: 24},
-						end: {line: 200, column: 35}
+						start: {line: 201, column: 24},
+						end: {line: 201, column: 35}
 					})(
 					A2(
 						_elm_lang$core$Basics$always,
@@ -8703,7 +8734,7 @@ var _user$project$Triage$HttpError = function (a) {
 var _user$project$Triage$OnReceiveLinks = function (a) {
 	return {ctor: 'OnReceiveLinks', _0: a};
 };
-var _user$project$Triage$doRefresh = function (token) {
+var _user$project$Triage$doGetLinks = function (token) {
 	return A3(
 		_elm_lang$core$Task$perform,
 		function (_p0) {
@@ -8711,13 +8742,13 @@ var _user$project$Triage$doRefresh = function (token) {
 				_elm_lang$core$Basics$toString(_p0));
 		},
 		_user$project$Triage$OnReceiveLinks,
-		_user$project$Triage$get(token));
+		_user$project$Triage$getLinks(token));
 };
 var _user$project$Triage$init = function (flags) {
 	var cmd = function () {
 		var _p1 = flags.token;
 		if (_p1.ctor === 'Just') {
-			return _user$project$Triage$doRefresh(_p1._0);
+			return _user$project$Triage$doGetLinks(_p1._0);
 		} else {
 			return _elm_lang$core$Platform_Cmd$none;
 		}
@@ -8731,6 +8762,7 @@ var _user$project$Triage$init = function (flags) {
 var _user$project$Triage$Link = function (a) {
 	return {ctor: 'Link', _0: a};
 };
+var _user$project$Triage$Next = {ctor: 'Next'};
 var _user$project$Triage$view = function (model) {
 	return _elm_lang$core$Native_Utils.eq(model.token, _elm_lang$core$Maybe$Nothing) ? A2(
 		_elm_lang$html$Html$div,
@@ -8818,10 +8850,19 @@ var _user$project$Triage$view = function (model) {
 				A2(
 				_elm_lang$html$Html_App$map,
 				_user$project$Triage$Link,
-				_user$project$Selector$view(model.snapshot))
+				_user$project$Selector$view(model.snapshot)),
+				A2(
+				_elm_lang$html$Html$button,
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html_Events$onClick(_user$project$Triage$Next)
+					]),
+				_elm_lang$core$Native_List.fromArray(
+					[
+						_elm_lang$html$Html$text('Next')
+					]))
 			]))));
 };
-var _user$project$Triage$Next = {ctor: 'Next'};
 var _user$project$Triage$keyboard = function () {
 	var keyToMsg = function (key) {
 		return _elm_lang$core$Native_Utils.eq(key, 13) ? _user$project$Triage$Next : _user$project$Triage$Link(

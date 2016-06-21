@@ -28,7 +28,7 @@ init flags =
     cmd =
       case flags.token of
         Just token ->
-          doRefresh token
+          doGetLinks token
         Nothing ->
           Cmd.none
   in
@@ -82,6 +82,7 @@ view model =
       [ class "container" ]
       [ stats model
       , Html.App.map Link <| Selector.view model.snapshot
+      , button [onClick Next] [text "Next"]
       ]
 
 
@@ -185,15 +186,15 @@ authed verb token url body =
     }
 
 
-get : String -> Task Http.Error (List Link)
-get token =
+getLinks : String -> Task Http.Error (List Link)
+getLinks token =
   (Http.fromJson Link.decodeLinks
     <| authed "GET" token "http://localhost:8080/links" Http.empty
   )
     `andThen` (\dict -> succeed (Dict.values dict))
 
-doRefresh token =
-  Task.perform (toString >> HttpError) OnReceiveLinks <| get token
+doGetLinks token =
+  Task.perform (toString >> HttpError) OnReceiveLinks <| getLinks token
 
 delete token links =
   (authed "DELETE" token "http://localhost:8080/links" <| Http.string <| encodeLinks links)

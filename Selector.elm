@@ -4,6 +4,7 @@ import Char exposing (fromCode, KeyCode)
 import Keyboard
 import Link exposing (..)
 import Html exposing (..)
+import Html.Events exposing (onClick)
 import Html.Attributes exposing (..)
 import String
 
@@ -34,7 +35,7 @@ view model =
 
 
 linkItem : Maybe Id -> ( Id, Link ) -> Html Msg
-linkItem selected ( _, link ) =
+linkItem selected ( id, link ) =
   let
     isSelected link =
       case selected of
@@ -66,7 +67,7 @@ linkItem selected ( _, link ) =
           excerpt
   in
     div
-      [ classList classes ]
+      [ classList classes, onClick (Click id) ]
       [ a [ href link.url, target "_blank" ] [ text <| title link ]
       , p [ class "link__excerpt" ] [ text excerpt ]
       ]
@@ -81,6 +82,7 @@ type Msg
   | Up
   | Down
   | Keep
+  | Click Id
 
 
 update : Msg -> Model -> Model
@@ -145,6 +147,16 @@ update action model =
 
           Just id ->
             { model | links = List.map (update' id) model.links }
+
+    Click id ->
+      let
+        update' selected ( id, link ) =
+          if id == selected then
+            ( id, { link | keep = not link.keep } )
+          else
+            ( id, link )
+      in
+        { model | selected = Just id, links = List.map (update' id) model.links }
 
     NoOp ->
       model
