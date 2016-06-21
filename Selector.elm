@@ -164,7 +164,7 @@ keyToAction key =
       Down
     else if char == 'k' then
       Up
-    else if char == 's' then
+    else if char == ' ' then
       Keep
     else
       NoOp

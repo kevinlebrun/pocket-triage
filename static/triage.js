@@ -11152,6 +11152,7 @@ Elm.Link.make = function (_elm) {
    $Debug = Elm.Debug.make(_elm),
    $Dict = Elm.Dict.make(_elm),
    $Json$Decode = Elm.Json.Decode.make(_elm),
+   $Json$Encode = Elm.Json.Encode.make(_elm),
    $List = Elm.List.make(_elm),
    $Maybe = Elm.Maybe.make(_elm),
    $Result = Elm.Result.make(_elm),
@@ -11169,6 +11170,14 @@ Elm.Link.make = function (_elm) {
       };
       return A2($Json$Decode.customDecoder,$Json$Decode.string,function (_p1) {    return toBool($String.toInt(_p1));});
    }();
+   var encodeLinks = function (links) {
+      var encodeLink = function (link) {
+         return $Json$Encode.object(_U.list([{ctor: "_Tuple2",_0: "id",_1: $Json$Encode.string(link.id)}
+                                            ,{ctor: "_Tuple2",_0: "title",_1: $Json$Encode.string(link.title)}
+                                            ,{ctor: "_Tuple2",_0: "url",_1: $Json$Encode.string(link.url)}]));
+      };
+      return A2($Json$Encode.encode,0,$Json$Encode.list(A2($List.map,encodeLink,links)));
+   };
    var Link = F6(function (a,b,c,d,e,f) {    return {id: a,title: b,url: c,excerpt: d,favorite: e,keep: f};});
    var decodeLink = A7($Json$Decode.object6,
    Link,
@@ -11179,7 +11188,7 @@ Elm.Link.make = function (_elm) {
    A2($Json$Decode._op[":="],"favorite",sbool),
    $Json$Decode.succeed(false));
    var decodeLinks = A2($Json$Decode.at,_U.list(["list"]),$Json$Decode.dict(decodeLink));
-   return _elm.Link.values = {_op: _op,decodeLink: decodeLink,decodeLinks: decodeLinks,Link: Link};
+   return _elm.Link.values = {_op: _op,decodeLinks: decodeLinks,encodeLinks: encodeLinks,Link: Link};
 };
 Elm.Selector = Elm.Selector || {};
 Elm.Selector.make = function (_elm) {
@@ -11273,7 +11282,7 @@ Elm.Selector.make = function (_elm) {
    var NoOp = {ctor: "NoOp"};
    var keyToAction = function (key) {
       var $char = $Char.fromCode(key);
-      return _U.eq($char,_U.chr("j")) ? Down : _U.eq($char,_U.chr("k")) ? Up : _U.eq($char,_U.chr("s")) ? Keep : NoOp;
+      return _U.eq($char,_U.chr("j")) ? Down : _U.eq($char,_U.chr("k")) ? Up : _U.eq($char,_U.chr(" ")) ? Keep : NoOp;
    };
    var keyboard = A2($Signal.map,keyToAction,$Keyboard.presses);
    var linkItem = F2(function (selected,_p12) {
@@ -11319,14 +11328,12 @@ Elm.Triage.make = function (_elm) {
    if (_elm.Triage.values) return _elm.Triage.values;
    var _U = Elm.Native.Utils.make(_elm),
    $Basics = Elm.Basics.make(_elm),
-   $Char = Elm.Char.make(_elm),
    $Debug = Elm.Debug.make(_elm),
    $Dict = Elm.Dict.make(_elm),
    $Effects = Elm.Effects.make(_elm),
    $Html = Elm.Html.make(_elm),
    $Html$Attributes = Elm.Html.Attributes.make(_elm),
    $Http = Elm.Http.make(_elm),
-   $Json$Encode = Elm.Json.Encode.make(_elm),
    $Keyboard = Elm.Keyboard.make(_elm),
    $Link = Elm.Link.make(_elm),
    $List = Elm.List.make(_elm),
@@ -11343,22 +11350,14 @@ Elm.Triage.make = function (_elm) {
       return v === null ? Elm.Maybe.make(_elm).Nothing : Elm.Maybe.make(_elm).Just(typeof v === "string" || typeof v === "object" && v instanceof String ? v : _U.badPort("a string",
       v));
    });
-   var linksValue = function (links) {
-      var linkValue = function (link) {
-         return $Json$Encode.object(_U.list([{ctor: "_Tuple2",_0: "id",_1: $Json$Encode.string(link.id)}
-                                            ,{ctor: "_Tuple2",_0: "title",_1: $Json$Encode.string(link.title)}
-                                            ,{ctor: "_Tuple2",_0: "url",_1: $Json$Encode.string(link.url)}]));
-      };
-      return $Json$Encode.list(A2($List.map,linkValue,links));
-   };
    var authed = F4(function (verb,token,url,body) {
       return A2($Http.send,$Http.defaultSettings,{verb: verb,headers: _U.list([{ctor: "_Tuple2",_0: "token",_1: token}]),url: url,body: body});
    });
    var $delete = F2(function (token,links) {
       return A2($Task.onError,
-      A4(authed,"DELETE",token,"http://localhost:8080/links",$Http.string(A2($Json$Encode.encode,0,linksValue(links)))),
+      A4(authed,"DELETE",token,"http://localhost:8080/links",$Http.string($Link.encodeLinks(links))),
       function (err) {
-         return _U.crash("Triage",{start: {line: 221,column: 24},end: {line: 221,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
+         return _U.crash("Triage",{start: {line: 204,column: 24},end: {line: 204,column: 35}})(A2($Basics.always,"Error!",A2($Debug.log,"Error: ",err)));
       });
    });
    var takeSnapshot = F3(function (page,n,links) {    return A2($List.take,10,A2($List.drop,(page - 1) * 10,links));});
@@ -11367,7 +11366,7 @@ Elm.Triage.make = function (_elm) {
    var Link = function (a) {    return {ctor: "Link",_0: a};};
    var Next = {ctor: "Next"};
    var keyboard = function () {
-      var keyToAction = function (key) {    var $char = $Char.fromCode(key);return _U.eq($char,_U.chr(" ")) ? Next : Link($Selector.keyToAction(key));};
+      var keyToAction = function (key) {    return _U.eq(key,13) ? Next : Link($Selector.keyToAction(key));};
       return A2($Signal.map,keyToAction,$Keyboard.presses);
    }();
    var NoOp = {ctor: "NoOp"};
@@ -11498,7 +11497,6 @@ Elm.Triage.make = function (_elm) {
                                ,update: update
                                ,authed: authed
                                ,get: get
-                               ,linksValue: linksValue
                                ,$delete: $delete
                                ,deleteEffect: deleteEffect
                                ,keyboard: keyboard};

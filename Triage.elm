@@ -7,7 +7,6 @@ import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..)
 import Http
-import Json.Encode
 import Keyboard
 import Link exposing (..)
 import Selector
@@ -63,9 +62,7 @@ emptyModel =
 
 view : Signal.Address Action -> Model -> Html
 view address model =
-  -- TODO refactor
   if model.token == Nothing then
-    -- TODO refactor with proper Anonymous tag
     div
       [ class "container" ]
       [ p [] [ text "You are not logged!" ]
@@ -201,7 +198,7 @@ get token =
 
 
 delete token links =
-  authed "DELETE" token "http://localhost:8080/links" (Http.string (Json.Encode.encode 0 <| encodeLinks links))
+  (authed "DELETE" token "http://localhost:8080/links" <| Http.string <| encodeLinks links)
     `onError` (\err -> Debug.crash (always "Error!" (Debug.log "Error: " err)))
 
 
@@ -220,14 +217,10 @@ keyboard : Signal Action
 keyboard =
   let
     keyToAction key =
-      let
-        char =
-          fromCode key
-      in
-        if char == ' ' then
-          Next
-        else
-          Link (Selector.keyToAction key)
+      if key == 13 then
+        Next
+      else
+        Link (Selector.keyToAction key)
   in
     Signal.map keyToAction Keyboard.presses
 

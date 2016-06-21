@@ -2,6 +2,7 @@ module Link (Link, Id, decodeLinks, encodeLinks) where
 
 import Dict
 import Json.Decode exposing ((:=))
+import Json.Encode
 import String
 
 
@@ -45,7 +46,7 @@ encodeLinks links =
         , ( "url", Json.Encode.string link.url )
         ]
   in
-    Json.Encode.list <| List.map encodeLink links
+    Json.Encode.encode 0 <| Json.Encode.list <| List.map encodeLink links
 
 
 sbool =
