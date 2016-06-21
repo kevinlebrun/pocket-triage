@@ -3,12 +3,14 @@ package main
 import (
 	"bytes"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"log"
 	"mime"
 	"net/http"
+	"net/http/httputil"
 	"net/url"
 	"path"
 	"regexp"
@@ -49,12 +51,19 @@ type Item struct {
 }
 
 func main() {
+	var dryRun = flag.Bool("dry-run", false, "Log deletion only")
+	flag.Parse()
+
+	if *dryRun {
+		fmt.Println("Running in dry run mode.")
+	}
+
 	router := mux.NewRouter().StrictSlash(true)
 
 	router.HandleFunc("/oauth/request", AuthInit).Methods("GET")
 	router.HandleFunc("/oauth/access_token", AuthFetchAccessToken).Methods("GET")
 
-	router.HandleFunc("/links", BatchDeleteLinks).Methods("DELETE")
+	router.HandleFunc("/links", BatchDeleteLinks(*dryRun)).Methods("DELETE")
 	router.HandleFunc("/links", FetchAllLinks).Methods("GET")
 
 	router.PathPrefix("/").HandlerFunc(HandleStatic)
@@ -93,7 +102,6 @@ func AuthInit(w http.ResponseWriter, r *http.Request) {
 
 	code := regexp.MustCompile("^code=(.*)$").FindSubmatch(body)
 	if code != nil {
-		fmt.Printf("%s\n", code[1])
 		http.Redirect(w, r, "https://getpocket.com/auth/authorize?request_token="+string(code[1])+"&redirect_uri=http://localhost:8080/oauth/access_token?request_token="+string(code[1]), 302)
 	}
 }
@@ -113,7 +121,6 @@ func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 	body, _ := ioutil.ReadAll(resp.Body)
 
 	result, _ := url.ParseQuery(string(body))
-	fmt.Printf("%+v\n", result)
 
 	http.Redirect(w, r, "http://localhost:8080?access_token="+result.Get("access_token"), 302)
 }
@@ -141,34 +148,49 @@ func FetchAllLinks(w http.ResponseWriter, r *http.Request) {
 	io.Copy(w, res.Body)
 }
 
-func BatchDeleteLinks(w http.ResponseWriter, r *http.Request) {
-	defer r.Body.Close()
-	body, _ := ioutil.ReadAll(r.Body)
+func BatchDeleteLinks(dryRun bool) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		defer r.Body.Close()
+		body, _ := ioutil.ReadAll(r.Body)
 
-	var items []Item
-	var actions []Action
+		var items []Item
+		var actions []Action
 
-	json.Unmarshal(body, &items)
+		json.Unmarshal(body, &items)
 
-	for _, item := range items {
-		actions = append(actions, Action{item.Id, "delete"})
+		for _, item := range items {
+			actions = append(actions, Action{item.Id, "delete"})
+		}
+
+		request := DeleteRequest{
+			AuthRequest{consumer_key, r.Header.Get("token")},
+			actions,
+		}
+
+		requestJson, _ := json.Marshal(request)
+		url := "https://getpocket.com/v3/send"
+		req, _ := http.NewRequest("POST", url, bytes.NewReader(requestJson))
+
+		req.Header.Add("content-type", "application/json")
+
+		if dryRun {
+			dump, _ := httputil.DumpRequest(req, true)
+			fmt.Printf("%s\n", dump)
+
+			w.Header().Add("content-type", "application/json")
+
+			res := map[string]interface{}{
+				"done": true,
+			}
+			json.NewEncoder(w).Encode(res)
+			return
+		}
+
+		res, _ := http.DefaultClient.Do(req)
+
+		w.Header().Add("content-type", "application/json")
+
+		defer res.Body.Close()
+		io.Copy(w, res.Body)
 	}
-
-	request := DeleteRequest{
-		AuthRequest{consumer_key, r.Header.Get("token")},
-		actions,
-	}
-
-	requestJson, _ := json.Marshal(request)
-	url := "https://getpocket.com/v3/send"
-	req, _ := http.NewRequest("POST", url, bytes.NewReader(requestJson))
-
-	req.Header.Add("content-type", "application/json")
-
-	res, _ := http.DefaultClient.Do(req)
-
-	w.Header().Add("content-type", "application/json")
-
-	defer res.Body.Close()
-	io.Copy(w, res.Body)
 }

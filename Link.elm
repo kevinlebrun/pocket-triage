@@ -1,4 +1,4 @@
-module Link (Link, Id, decodeLink, decodeLinks) where
+module Link (Link, Id, decodeLinks, encodeLinks) where
 
 import Dict
 import Json.Decode exposing ((:=))
@@ -34,6 +34,18 @@ decodeLink =
 decodeLinks : Json.Decode.Decoder (Dict.Dict String Link)
 decodeLinks =
   Json.Decode.at [ "list" ] (Json.Decode.dict decodeLink)
+
+
+encodeLinks links =
+  let
+    encodeLink link =
+      Json.Encode.object
+        [ ( "id", Json.Encode.string link.id )
+        , ( "title", Json.Encode.string link.title )
+        , ( "url", Json.Encode.string link.url )
+        ]
+  in
+    Json.Encode.list <| List.map encodeLink links
 
 
 sbool =

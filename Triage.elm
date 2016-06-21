@@ -200,24 +200,8 @@ get token =
     `onError` (toString >> HttpError >> Signal.send actions.address)
 
 
-
--- TODO move into Link.elm
-
-
-linksValue links =
-  let
-    linkValue link =
-      Json.Encode.object
-        [ ( "id", Json.Encode.string link.id )
-        , ( "title", Json.Encode.string link.title )
-        , ( "url", Json.Encode.string link.url )
-        ]
-  in
-    Json.Encode.list <| List.map linkValue links
-
-
 delete token links =
-  authed "DELETE" token "http://localhost:8080/links" (Http.string (Json.Encode.encode 0 <| linksValue links))
+  authed "DELETE" token "http://localhost:8080/links" (Http.string (Json.Encode.encode 0 <| encodeLinks links))
     `onError` (\err -> Debug.crash (always "Error!" (Debug.log "Error: " err)))
 
 
