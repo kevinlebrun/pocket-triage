@@ -7,8 +7,10 @@ import (
 	"io"
 	"io/ioutil"
 	"log"
+	"mime"
 	"net/http"
 	"net/url"
+	"path"
 	"regexp"
 	"strings"
 
@@ -61,17 +63,20 @@ func main() {
 }
 
 func HandleStatic(w http.ResponseWriter, r *http.Request) {
-	path := strings.TrimPrefix(r.URL.Path, "/")
+	p := strings.TrimPrefix(r.URL.Path, "/")
 
-	if path == "" {
-		path = "index.html"
+	if p == "" {
+		p = "index.html"
 	}
 
-	data, err := Asset(path)
+	data, err := Asset(p)
 	if err != nil {
 		w.WriteHeader(404)
 		return
 	}
+
+	ext := path.Ext(p)
+	w.Header().Add("Content-Type", mime.TypeByExtension(ext))
 
 	io.Copy(w, bytes.NewReader(data))
 }
