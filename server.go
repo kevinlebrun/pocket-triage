@@ -2,24 +2,28 @@ package main
 
 import (
 	"bytes"
+	"embed"
 	"encoding/json"
 	"flag"
 	"fmt"
 	"io"
+	"io/fs"
 	"io/ioutil"
 	"log"
-	"mime"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
-	"path"
+	"os"
 	"regexp"
 	"strings"
 
 	"github.com/gorilla/mux"
 )
 
-const consumer_key = "51813-9210c4b043da8404cede46e2"
+const consumerKey = "51813-9210c4b043da8404cede46e2"
+
+//go:embed dist
+var embededFiles embed.FS
 
 type AuthRequest struct {
 	ConsumerKey string `json:"consumer_key"`
@@ -44,14 +48,12 @@ type DeleteRequest struct {
 	Actions []Action `json:"actions"`
 }
 
-type Item struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
-	URL   string `json:"url"`
-}
+var (
+ dryRun = flag.Bool("dry-run", false, "Log deletion only")
+ live = flag.Bool("live", false, "Use OS local assets")
+)
 
 func main() {
-	var dryRun = flag.Bool("dry-run", false, "Log deletion only")
 	flag.Parse()
 
 	if *dryRun {
@@ -78,21 +80,26 @@ func HandleStatic(w http.ResponseWriter, r *http.Request) {
 		p = "index.html"
 	}
 
-	data, err := Asset(p)
-	if err != nil {
-		w.WriteHeader(404)
-		return
+	handler := http.FileServer(getFileSystem(*live))
+	handler.ServeHTTP(w, r)
+}
+
+func getFileSystem(live bool) http.FileSystem {
+	if live {
+		return http.FS(os.DirFS("dist"))
 	}
 
-	ext := path.Ext(p)
-	w.Header().Add("Content-Type", mime.TypeByExtension(ext))
+	fsys, err := fs.Sub(embededFiles, "dist")
+	if err != nil {
+		panic(err)
+	}
 
-	io.Copy(w, bytes.NewReader(data))
+	return http.FS(fsys)
 }
 
 func AuthInit(w http.ResponseWriter, r *http.Request) {
 	values := url.Values{
-		"consumer_key": {consumer_key},
+		"consumer_key": {consumerKey},
 		"redirect_uri": {"Triage:authorizationFinished"},
 	}
 	resp, _ := http.PostForm("https://getpocket.com/v3/oauth/request.php", values)
@@ -110,7 +117,7 @@ func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 	request_token := r.URL.Query().Get("request_token")
 
 	values := url.Values{
-		"consumer_key": {consumer_key},
+		"consumer_key": {consumerKey},
 		"code":         {request_token},
 	}
 
@@ -126,7 +133,7 @@ func AuthFetchAccessToken(w http.ResponseWriter, r *http.Request) {
 
 func FetchAllLinks(w http.ResponseWriter, r *http.Request) {
 	request := GetRequest{
-		AuthRequest{consumer_key, r.Header.Get("token")},
+		AuthRequest{consumerKey, r.Header.Get("token")},
 		"unread",
 		"complete",
 		5000,
@@ -152,20 +159,22 @@ func BatchDeleteLinks(dryRun bool) func(http.ResponseWriter, *http.Request) {
 		defer r.Body.Close()
 		body, _ := ioutil.ReadAll(r.Body)
 
-		var items []Item
+		var ids []string
+
+		// FIXME(kevin.lebrun): handle errors
+		json.Unmarshal(body, &ids)
+
 		var actions []Action
-
-		json.Unmarshal(body, &items)
-
-		for _, item := range items {
-			actions = append(actions, Action{item.Id, "delete"})
+		for _, id := range ids {
+			actions = append(actions, Action{id, "delete"})
 		}
 
 		request := DeleteRequest{
-			AuthRequest{consumer_key, r.Header.Get("token")},
+			AuthRequest{consumerKey, r.Header.Get("token")},
 			actions,
 		}
 
+		// FIXME(kevin.lebrun): handle errors
 		requestJson, _ := json.Marshal(request)
 		url := "https://getpocket.com/v3/send"
 		req, _ := http.NewRequest("POST", url, bytes.NewReader(requestJson))

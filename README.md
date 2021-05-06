@@ -4,14 +4,33 @@ A simple way to clean up your Pocket links in close to no time.
 
 ## Usage
 
-    $ glide install
+Build binary:
+
     $ npm install
-    $ ./node_modules/.bin/elm-package install
-    $ ./node_modules/.bin/elm-make Triage.elm --output static/triage.js
-    $ go-bindata -prefix “static/” -o assets.go static/...
-    $ go run *.go
+    $ npx parcel build index.html
+    $ go build *.go
+    $ ./server
 
 Then open your browser to `http://localhost:8080`.
+
+Use `j` and `k` to select an article. Press the space key to whitelist the selected article. Press the return key or `Next` to go to the next page.
+
+Note: Articles are deleted from `Pocket` at the end of each pages. The operation is irreversible.
+
+## Test
+
+    $ go run *.go --dry-run --live
+    $ npm run start
+
+Then open your browser to `http://localhost:8080`.
+
+Run test using `jest`:
+
+    $ npx jest
+
+Format code before pushing:
+
+    $ npx prettier --write
 
 ## License
 
